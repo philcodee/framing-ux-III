@@ -102,6 +102,14 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // Block dotfiles (.env, .gitignore, etc.) and server source
+  const segments = pathname.split('/').filter(Boolean);
+  if (segments.some(s => s.startsWith('.')) || pathname === '/server.js') {
+    res.writeHead(403);
+    res.end('Forbidden');
+    return;
+  }
+
   fs.readFile(filePath, (err, data) => {
     if (err) {
       res.writeHead(404, { 'Content-Type': 'text/plain' });
