@@ -8,10 +8,9 @@
  * Uses the Gemini REST API directly (no build step required).
  */
 
-import { SYSTEM_PROMPT, GEMINI_API_KEY, GEMINI_MODEL } from './config.js';
+import { SYSTEM_PROMPT, GEMINI_PROXY_URL, GEMINI_MODEL } from './config.js';
 
-const API_URL =
-  `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+const API_URL = `${GEMINI_PROXY_URL}/models/${GEMINI_MODEL}:generateContent`;
 
 // ── Civic domains the router presents to the user ────────────────
 const DOMAINS = [
