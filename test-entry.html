@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Entry Stage — Test</title>
+<style>
+
+:root {
+  --ink:      #1A1A18;
+  --ink-2:    #3D3D38;
+  --ink-3:    #6B6B63;
+  --tan:      #C8B89A;
+  --tan-lt:   #E8DDD0;
+  --tan-dk:   #8B7355;
+  --paper:    #F5F0E8;
+  --paper-dk: #EDE5D8;
+  --red:      #C0392B;
+  --red-lt:   #F0D0CC;
+  --rule:     rgba(26,26,24,0.15);
+  --rule-s:   rgba(26,26,24,0.35);
+  --ff-head:  'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --ff-body:  Georgia, 'Times New Roman', serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--ff-head);
+  height: 100dvh;
+  display: grid;
+  grid-template-rows: auto 1fr auto auto auto;
+}
+
+/* ── Header ─────────────────────────────────────────────── */
+
+.broadside {
+  background: var(--ink);
+  padding: 14px 24px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
+.broadside-title {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: #fff;
+}
+
+.broadside-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.stage-pill {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 3px 9px;
+  background: transparent;
+  border: 1px solid var(--tan);
+  color: var(--tan);
+}
+
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ink-3);
+  transition: background 0.3s;
+  flex-shrink: 0;
+}
+
+.status-dot.thinking { background: var(--tan); }
+.status-dot.ready    { background: #5a9e6f; }
+.status-dot.done     { background: var(--red); }
+
+.status-label {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--tan-dk);
+}
+
+/* ── Wizard body ────────────────────────────────────────── */
+
+.wizard-body {
+  overflow-y: auto;
+  padding: 40px 40px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* ── Wizard steps ───────────────────────────────────────── */
+
+.wizard-step {
+  padding-bottom: 32px;
+}
+
+.wizard-step.hidden { display: none; }
+
+.step-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--tan-dk);
+  margin-bottom: 14px;
+}
+
+/* ── Location input ─────────────────────────────────────── */
+
+.location-row {
+  display: flex;
+  gap: 0;
+  border-top: 2px solid var(--ink);
+  margin-bottom: 12px;
+}
+
+.location-input {
+  flex: 1;
+  border: none;
+  border-bottom: 1px solid var(--rule-s);
+  border-right: 1px solid var(--rule);
+  outline: none;
+  padding: 11px 14px;
+  font-family: var(--ff-body);
+  font-size: 15px;
+  color: var(--ink);
+  background: var(--paper-dk);
+}
+
+.location-input::placeholder { color: var(--ink-3); font-style: italic; }
+
+.location-input:focus {
+  background: #fff;
+  border-bottom-color: var(--tan-dk);
+}
+
+.geo-btn {
+  border: none;
+  border-bottom: 1px solid var(--rule-s);
+  background: var(--paper-dk);
+  color: var(--ink-3);
+  font-family: var(--ff-head);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 0 16px;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.geo-btn:hover { color: var(--ink); background: var(--tan-lt); }
+.geo-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.confirm-btn {
+  border: none;
+  background: var(--ink);
+  color: var(--tan-lt);
+  font-family: var(--ff-head);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 9px 18px;
+  cursor: pointer;
+  transition: background 0.15s;
+  align-self: flex-start;
+}
+
+.confirm-btn:hover:not(:disabled) { background: var(--ink-2); }
+.confirm-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+/* ── Agent hint zone ────────────────────────────────────── */
+
+.agent-hint-zone {
+  border-left: 2px solid var(--tan);
+  padding: 10px 16px;
+  margin-bottom: 36px;
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.agent-hint-zone.empty { opacity: 0; }
+
+.hint-text {
+  font-family: var(--ff-body);
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ink-2);
+  font-style: italic;
+}
+
+/* Thinking dots inside hint zone */
+.dot-pulse {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--tan-dk);
+  animation: pulse 1.2s infinite;
+  flex-shrink: 0;
+}
+.dot-pulse:nth-child(2) { animation-delay: 0.2s; }
+.dot-pulse:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes pulse {
+  0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); }
+  40%           { opacity: 1;   transform: scale(1); }
+}
+
+/* ── Domain grid ────────────────────────────────────────── */
+
+.domain-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.domain-btn {
+  border: 1px solid var(--rule-s);
+  border-top: 2px solid var(--ink-3);
+  background: var(--paper-dk);
+  color: var(--ink-2);
+  font-family: var(--ff-head);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 12px 14px;
+  cursor: pointer;
+  text-align: left;
+  transition: border-top-color 0.12s, background 0.12s, color 0.12s;
+}
+
+.domain-btn:hover {
+  border-top-color: var(--ink);
+  background: #fff;
+  color: var(--ink);
+}
+
+.domain-btn.selected {
+  border-top-color: var(--ink);
+  border-top-width: 3px;
+  background: var(--ink);
+  color: var(--tan-lt);
+}
+
+/* ── Error ──────────────────────────────────────────────── */
+
+.error-strip {
+  display: none;
+  background: var(--red-lt);
+  border-left: 3px solid var(--red);
+  padding: 8px 40px;
+  font-size: 11px;
+  font-family: var(--ff-body);
+  color: var(--red);
+  font-style: italic;
+}
+
+.error-strip.show { display: block; }
+
+/* ── Complete banner ────────────────────────────────────── */
+
+.complete-banner {
+  display: none;
+  background: var(--ink);
+  color: var(--tan-lt);
+  padding: 10px 24px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: center;
+  border-top: 2px solid var(--tan-dk);
+}
+
+.complete-banner.show { display: block; }
+
+/* ── State readout ──────────────────────────────────────── */
+
+.state-panel {
+  border-top: 1px solid var(--rule-s);
+  background: var(--paper-dk);
+  padding: 10px 24px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.state-item {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+}
+
+.state-key {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--tan-dk);
+}
+
+.state-val {
+  font-family: var(--ff-body);
+  font-size: 12px;
+  color: var(--ink);
+}
+
+.state-val.empty {
+  color: var(--ink-3);
+  font-style: italic;
+}
+
+.state-divider {
+  width: 1px;
+  height: 14px;
+  background: var(--rule-s);
+}
+
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="broadside">
+  <span class="broadside-title">CivicGuide</span>
+  <div class="broadside-meta">
+    <span class="stage-pill">Stage 1 — Entry</span>
+    <div class="status-dot" id="statusDot"></div>
+    <span class="status-label" id="statusLabel">Ready</span>
+  </div>
+</header>
+
+<!-- WIZARD -->
+<div class="wizard-body">
+
+  <!-- Step 1: Location -->
+  <section class="wizard-step" id="stepLocation">
+    <p class="step-label">Where are you located?</p>
+    <div class="location-row">
+      <input
+        class="location-input"
+        id="locationInput"
+        type="text"
+        placeholder="City, State  or  City, Country"
+        autocomplete="off"
+      >
+      <button class="geo-btn" id="geoBtn">Detect</button>
+    </div>
+    <button class="confirm-btn" id="confirmLocation" disabled>Confirm location</button>
+  </section>
+
+  <!-- Agent hint zone (shared) -->
+  <div class="agent-hint-zone empty" id="agentHint"></div>
+
+  <!-- Step 2: Domain (hidden until location confirmed) -->
+  <section class="wizard-step hidden" id="stepDomain">
+    <p class="step-label">Which area can we help with?</p>
+    <div class="domain-grid" id="domainGrid"></div>
+  </section>
+
+</div>
+
+<!-- ERROR -->
+<div class="error-strip" id="errorStrip"></div>
+
+<!-- COMPLETE BANNER -->
+<div class="complete-banner" id="completeBanner"></div>
+
+<!-- STATE READOUT -->
+<div class="state-panel">
+  <div class="state-item">
+    <span class="state-key">Stage</span>
+    <span class="state-val">1 — Entry</span>
+  </div>
+  <div class="state-divider"></div>
+  <div class="state-item">
+    <span class="state-key">Agent</span>
+    <span class="state-val">Router</span>
+  </div>
+  <div class="state-divider"></div>
+  <div class="state-item">
+    <span class="state-key">Location</span>
+    <span class="state-val empty" id="stateLocation">—</span>
+  </div>
+  <div class="state-divider"></div>
+  <div class="state-item">
+    <span class="state-key">Domain</span>
+    <span class="state-val empty" id="stateDomain">—</span>
+  </div>
+</div>
+
+<script type="module">
+import { EntryStage } from './entry.js';
+
+const statusDot      = document.getElementById('statusDot');
+const statusLabel    = document.getElementById('statusLabel');
+const locationInput  = document.getElementById('locationInput');
+const geoBtn         = document.getElementById('geoBtn');
+const confirmBtn     = document.getElementById('confirmLocation');
+const agentHint      = document.getElementById('agentHint');
+const stepDomain     = document.getElementById('stepDomain');
+const domainGrid     = document.getElementById('domainGrid');
+const stateLocation  = document.getElementById('stateLocation');
+const stateDomain    = document.getElementById('stateDomain');
+const errorStrip     = document.getElementById('errorStrip');
+const completeBanner = document.getElementById('completeBanner');
+
+const DOMAINS = [
+  'DMV',
+  'Parks & Recreation',
+  'Streets & Transit',
+  'Welfare / Benefits',
+  'Social Security',
+  'Housing',
+  'Other',
+];
+
+let confirmedLocation = null;
+
+// ── Status helpers ────────────────────────────────────────
+
+function setStatus(state) {
+  statusDot.className = `status-dot ${state}`;
+  statusLabel.textContent = {
+    thinking: 'Thinking…',
+    ready:    'Ready',
+    done:     'Complete',
+  }[state] ?? state;
+}
+
+// ── Agent hint zone ───────────────────────────────────────
+
+function showThinkingHint() {
+  agentHint.classList.remove('empty');
+  agentHint.innerHTML = `
+    <div class="dot-pulse"></div>
+    <div class="dot-pulse"></div>
+    <div class="dot-pulse"></div>
+  `;
+}
+
+function setHint(text) {
+  agentHint.classList.remove('empty');
+  agentHint.innerHTML = `<span class="hint-text">${text}</span>`;
+}
+
+// ── Error strip ───────────────────────────────────────────
+
+function showError(msg) {
+  errorStrip.textContent = `Error: ${msg}`;
+  errorStrip.classList.add('show');
+  setTimeout(() => errorStrip.classList.remove('show'), 6000);
+}
+
+// ── State panel update ────────────────────────────────────
+
+function updateStatePanel({ location, domain }) {
+  if (location) {
+    stateLocation.textContent = location;
+    stateLocation.classList.remove('empty');
+  }
+  if (domain) {
+    stateDomain.textContent = domain;
+    stateDomain.classList.remove('empty');
+  }
+}
+
+// ── Domain grid build ─────────────────────────────────────
+
+function buildDomainGrid() {
+  domainGrid.innerHTML = '';
+  for (const domain of DOMAINS) {
+    const btn = document.createElement('button');
+    btn.className = 'domain-btn';
+    btn.textContent = domain;
+    btn.addEventListener('click', () => handleDomainSelect(domain, btn));
+    domainGrid.appendChild(btn);
+  }
+}
+
+// ── Wire up EntryStage ────────────────────────────────────
+
+const stage = new EntryStage({
+
+  onMessage(role, text) {
+    if (role !== 'model') return; // user messages are silent in wizard mode
+    setStatus('ready');
+    setHint(text);
+  },
+
+  onComplete(state) {
+    updateStatePanel(state);
+    setStatus('done');
+    completeBanner.textContent =
+      `Entry complete — Location: ${state.location} · Domain: ${state.domain} · Ready for Stage 2`;
+    completeBanner.classList.add('show');
+    // Lock domain grid
+    domainGrid.querySelectorAll('.domain-btn:not(.selected)')
+      .forEach(b => { b.disabled = true; b.style.opacity = '0.35'; });
+  },
+
+  onError(err) {
+    setStatus('ready');
+    showError(err.message);
+    console.error(err);
+  },
+});
+
+// ── Location handlers ─────────────────────────────────────
+
+locationInput.addEventListener('input', () => {
+  confirmBtn.disabled = locationInput.value.trim().length < 2;
+});
+
+confirmBtn.addEventListener('click', () => {
+  const loc = locationInput.value.trim();
+  if (!loc) return;
+
+  confirmedLocation = loc;
+  updateStatePanel({ location: loc });
+
+  // Freeze location step
+  locationInput.disabled = true;
+  confirmBtn.disabled = true;
+  geoBtn.disabled = true;
+
+  // Show domain step
+  buildDomainGrid();
+  stepDomain.classList.remove('hidden');
+
+  // Send structured message to agent
+  setStatus('thinking');
+  showThinkingHint();
+  stage.send(
+    `User location: ${loc}. Respond with one calm sentence describing what civic areas you can help with.`
+  );
+});
+
+// ── Geolocation ───────────────────────────────────────────
+
+geoBtn.addEventListener('click', () => {
+  if (!navigator.geolocation) {
+    showError('Geolocation not supported by this browser.');
+    return;
+  }
+  geoBtn.textContent = '…';
+  geoBtn.disabled = true;
+
+  navigator.geolocation.getCurrentPosition(
+    async (pos) => {
+      const { latitude, longitude } = pos.coords;
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`,
+          { headers: { 'Accept-Language': 'en' } }
+        );
+        const data = await res.json();
+        const city  = data.address?.city || data.address?.town || data.address?.village || '';
+        const state = data.address?.state || data.address?.country || '';
+        const label = city && state ? `${city}, ${state}` : data.display_name?.split(',').slice(0, 2).join(',').trim() || '';
+        locationInput.value = label;
+        confirmBtn.disabled = label.length < 2;
+      } catch {
+        showError('Could not reverse-geocode location.');
+      }
+      geoBtn.textContent = 'Detect';
+      geoBtn.disabled = false;
+    },
+    () => {
+      showError('Location access denied.');
+      geoBtn.textContent = 'Detect';
+      geoBtn.disabled = false;
+    }
+  );
+});
+
+// ── Domain selection ──────────────────────────────────────
+
+function handleDomainSelect(domain, btn) {
+  // Visual selection
+  domainGrid.querySelectorAll('.domain-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+
+  updateStatePanel({ domain });
+
+  // Disable grid while thinking
+  domainGrid.querySelectorAll('.domain-btn').forEach(b => { b.disabled = true; });
+
+  setStatus('thinking');
+  showThinkingHint();
+  stage.send(
+    `User selected domain: ${domain}. Location: ${confirmedLocation}. Respond with one calm sentence describing what you can help with.`
+  );
+}
+
+</script>
+</body>
+</html>

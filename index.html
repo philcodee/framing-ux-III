@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CivicGuide — Wizard Architecture</title>
+<style>
+
+/* ── Unigrid Design System ──────────────────────────────── */
+
+:root {
+  --ink:      #1A1A18;
+  --ink-2:    #3D3D38;
+  --ink-3:    #6B6B63;
+  --tan:      #C8B89A;
+  --tan-lt:   #E8DDD0;
+  --tan-dk:   #8B7355;
+  --paper:    #F5F0E8;
+  --paper-dk: #EDE5D8;
+  --red:      #C0392B;
+  --red-lt:   #F0D0CC;
+  --rule:     rgba(26,26,24,0.15);
+  --rule-s:   rgba(26,26,24,0.35);
+  --ff-head:  'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --ff-body:  Georgia, 'Times New Roman', serif;
+  --gutter:   12px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--ff-body);
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+/* ── Type ───────────────────────────────────────────────── */
+
+.ug-h1   { font-family: var(--ff-head); font-size: 34px; font-weight: 700; letter-spacing: -0.04em; line-height: 1.05; }
+.ug-h2   { font-family: var(--ff-head); font-size: 22px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; }
+.ug-h3   { font-family: var(--ff-head); font-size: 15px; font-weight: 700; }
+.ug-body { font-family: var(--ff-body); font-size: 13px; line-height: 1.65; color: var(--ink-2); }
+.ug-cap  { font-family: var(--ff-head); font-size: 10px; letter-spacing: 0.08em; color: var(--ink-3); }
+.ug-lbl  { font-family: var(--ff-head); font-size: 9px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--tan-dk); }
+
+/* ── Broadside ──────────────────────────────────────────── */
+
+.ug-broadside {
+  background: var(--ink);
+  color: #fff;
+  padding: 18px 32px 16px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.ug-broadside .ug-title {
+  font-family: var(--ff-head);
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  color: #fff;
+}
+
+.ug-broadside .ug-meta {
+  font-family: var(--ff-head);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--tan);
+  text-align: right;
+  line-height: 1.8;
+  flex-shrink: 0;
+}
+
+/* ── Rules ──────────────────────────────────────────────── */
+
+.ug-rule-s { border: none; border-top: 1px solid var(--rule-s); margin: 16px 0; }
+.ug-rule-t { border: none; border-top: 3px solid var(--ink);    margin: 16px 0; }
+.ug-rule-d { border: none; border-top: 3px double var(--ink);   margin: 20px 0; }
+
+/* ── Columns ────────────────────────────────────────────── */
+
+.ug-cols {
+  display: grid;
+  gap: var(--gutter);
+  border-top: 3px solid var(--ink);
+}
+
+.ug-col {
+  padding: 14px 18px 14px 0;
+  border-right: 1px solid var(--rule);
+}
+
+.ug-col:last-child { border-right: none; padding-right: 0; }
+.ug-col:not(:first-child) { padding-left: 18px; }
+
+.ug-col h3 {
+  font-family: var(--ff-head);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink);
+  margin-bottom: 7px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--rule-s);
+}
+
+.ug-col p {
+  font-family: var(--ff-body);
+  font-size: 12px;
+  line-height: 1.65;
+  color: var(--ink-2);
+}
+
+/* ── Badges ─────────────────────────────────────────────── */
+
+.ug-badge {
+  display: inline-block;
+  font-family: var(--ff-head);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+}
+
+.ug-b-ink { background: var(--ink);  color: var(--tan-lt); }
+.ug-b-tan { background: var(--tan);  color: var(--ink); }
+.ug-b-red { background: var(--red);  color: #fff; }
+.ug-b-out { border: 1px solid var(--rule-s); color: var(--ink); }
+
+/* ── Notes ──────────────────────────────────────────────── */
+
+.ug-note {
+  border-left: 3px solid var(--ink);
+  padding: 9px 14px;
+  background: rgba(0,0,0,0.04);
+  font-family: var(--ff-body);
+  font-size: 12px;
+  font-style: italic;
+  color: var(--ink-2);
+  line-height: 1.6;
+}
+
+.ug-note-red {
+  border-left-color: var(--red);
+  background: rgba(192,57,43,0.06);
+}
+
+/* ── Tables ─────────────────────────────────────────────── */
+
+.ug-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+
+.ug-table th {
+  font-family: var(--ff-head);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  border-bottom: 2px solid var(--ink);
+  padding: 6px 10px 6px 0;
+  text-align: left;
+}
+
+.ug-table td {
+  padding: 7px 10px 7px 0;
+  border-bottom: 1px solid var(--rule);
+  font-family: var(--ff-body);
+  color: var(--ink-2);
+  vertical-align: top;
+}
+
+.ug-table tr:last-child td { border-bottom: none; }
+
+/* ── Stage Rail ─────────────────────────────────────────── */
+
+.stage-rail {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 16px 0 12px;
+  font-family: var(--ff-head);
+}
+
+.stage-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  position: relative;
+  flex: 1;
+}
+
+.stage-node::after {
+  content: '';
+  position: absolute;
+  top: 10px;
+  left: calc(50% + 12px);
+  right: calc(-50% + 12px);
+  height: 1px;
+  background: var(--rule-s);
+}
+
+.stage-node:last-child::after { display: none; }
+
+.stage-num {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--tan-lt);
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  letter-spacing: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.stage-name {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--tan-dk);
+  text-align: center;
+}
+
+/* ── Screen Anatomy Diagram ─────────────────────────────── */
+
+.anatomy-diagram {
+  border: 1px solid var(--rule-s);
+  font-family: var(--ff-head);
+  font-size: 11px;
+  color: var(--ink-2);
+  background: var(--paper-dk);
+  overflow: hidden;
+}
+
+.anatomy-row {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--rule);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.anatomy-row:last-child { border-bottom: none; }
+
+.anatomy-row.rail {
+  background: var(--ink);
+  color: var(--tan-lt);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+}
+
+.anatomy-row.content {
+  min-height: 72px;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-3);
+  font-style: italic;
+  font-family: var(--ff-body);
+  font-size: 12px;
+}
+
+.anatomy-row.nav {
+  font-size: 10px;
+}
+
+.anatomy-btn {
+  display: inline-block;
+  border: 1px solid var(--rule-s);
+  padding: 3px 12px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+.anatomy-btn.primary {
+  background: var(--ink);
+  color: var(--tan-lt);
+  border-color: var(--ink);
+}
+
+.anatomy-label {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--tan);
+  opacity: 0.7;
+}
+
+/* ── State Block ────────────────────────────────────────── */
+
+.state-block {
+  background: var(--ink);
+  color: var(--tan-lt);
+  padding: 16px 20px;
+  font-family: var(--ff-head);
+  font-size: 11px;
+  line-height: 1.7;
+  letter-spacing: 0.01em;
+}
+
+.state-block .state-key   { color: var(--tan); }
+.state-block .state-type  { color: var(--ink-3); }
+.state-block .state-brace { color: var(--tan-dk); }
+
+/* ── Page Layout ────────────────────────────────────────── */
+
+.page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding-bottom: 48px;
+}
+
+.section {
+  padding: 0 32px;
+  margin-top: 28px;
+}
+
+.section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  gap: 16px;
+}
+
+/* ── Component List ─────────────────────────────────────── */
+
+.component-list {
+  list-style: none;
+}
+
+.component-list li {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--rule);
+  font-family: var(--ff-body);
+  font-size: 12px;
+  color: var(--ink-2);
+}
+
+.component-list li:last-child { border-bottom: none; }
+
+.component-name {
+  font-family: var(--ff-head);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink);
+  white-space: nowrap;
+  min-width: 160px;
+}
+
+/* ── Routing Rules ──────────────────────────────────────── */
+
+.routing-list {
+  list-style: none;
+}
+
+.routing-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--rule);
+  font-family: var(--ff-body);
+  font-size: 12px;
+  color: var(--ink-2);
+  line-height: 1.5;
+}
+
+.routing-list li:last-child { border-bottom: none; }
+
+.routing-marker {
+  width: 5px;
+  height: 5px;
+  background: var(--ink);
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 6px;
+}
+
+/* ── Footer ─────────────────────────────────────────────── */
+
+.ug-footer {
+  margin: 32px 32px 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--rule-s);
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- BROADSIDE -->
+  <header class="ug-broadside">
+    <div class="ug-title">CivicGuide</div>
+    <div class="ug-meta">
+      Wizard Architecture<br>
+      Document Processing System
+    </div>
+  </header>
+
+  <!-- STAGE RAIL -->
+  <div class="section">
+    <div class="section-head">
+      <span class="ug-lbl">Stages</span>
+      <span class="ug-cap">7 sequential views — explicit navigation only</span>
+    </div>
+
+    <div class="stage-rail">
+      <div class="stage-node">
+        <div class="stage-num">1</div>
+        <div class="stage-name">Entry</div>
+      </div>
+      <div class="stage-node">
+        <div class="stage-num">2</div>
+        <div class="stage-name">Upload</div>
+      </div>
+      <div class="stage-node">
+        <div class="stage-num">3</div>
+        <div class="stage-name">Scan</div>
+      </div>
+      <div class="stage-node">
+        <div class="stage-num">4</div>
+        <div class="stage-name">Annotate</div>
+      </div>
+      <div class="stage-node">
+        <div class="stage-num">5</div>
+        <div class="stage-name">Form</div>
+      </div>
+      <div class="stage-node">
+        <div class="stage-num">6</div>
+        <div class="stage-name">Review</div>
+      </div>
+      <div class="stage-node">
+        <div class="stage-num">7</div>
+        <div class="stage-name">Export</div>
+      </div>
+    </div>
+
+    <div class="ug-note" style="margin-top:4px;">
+      Stages advance only on explicit user action. Back is always available except during Scan.
+      Any stage can surface an "explain this" overlay without leaving the stage.
+    </div>
+  </div>
+
+  <hr class="ug-rule-d" style="margin: 24px 32px;">
+
+  <!-- STAGE DESCRIPTIONS + AGENT MAP (2-col) -->
+  <div class="section">
+    <div class="section-head">
+      <span class="ug-lbl">Stage Details &amp; Agent Map</span>
+    </div>
+
+    <div class="ug-cols" style="grid-template-columns: 1fr 1fr;">
+      <div class="ug-col">
+        <h3>What Happens at Each Stage</h3>
+        <table class="ug-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Stage</th>
+              <th>User Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td>
+              <td>Entry</td>
+              <td>Location + domain selection</td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td>Upload</td>
+              <td>Document drop or manual entry</td>
+            </tr>
+            <tr>
+              <td>3</td>
+              <td>Scan</td>
+              <td>Progress indicator only — agent-side OCR</td>
+            </tr>
+            <tr>
+              <td>4</td>
+              <td>Annotate</td>
+              <td>Document view + plain-language overlays</td>
+            </tr>
+            <tr>
+              <td>5</td>
+              <td>Form</td>
+              <td>Simplified form, pre-filled from scan</td>
+            </tr>
+            <tr>
+              <td>6</td>
+              <td>Review</td>
+              <td>Full summary, PII warnings, edit affordances</td>
+            </tr>
+            <tr>
+              <td>7</td>
+              <td>Export</td>
+              <td>Download PDF or hand-off link</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="ug-col">
+        <h3>Active Agent per Stage</h3>
+        <table class="ug-table">
+          <thead>
+            <tr>
+              <th>Stage</th>
+              <th>Agent</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Entry</td>
+              <td><span class="ug-badge ug-b-out">Router</span></td>
+            </tr>
+            <tr>
+              <td>Upload</td>
+              <td><span class="ug-badge ug-b-out">Router</span></td>
+            </tr>
+            <tr>
+              <td>Scan</td>
+              <td><span class="ug-badge ug-b-ink">Document Agent</span></td>
+            </tr>
+            <tr>
+              <td>Annotate</td>
+              <td>
+                <span class="ug-badge ug-b-ink" style="margin-right:4px;">Document Agent</span>
+                <span class="ug-badge ug-b-tan">Domain Expert</span>
+              </td>
+            </tr>
+            <tr>
+              <td>Form</td>
+              <td><span class="ug-badge ug-b-tan">Domain Expert</span></td>
+            </tr>
+            <tr>
+              <td>Review</td>
+              <td><span class="ug-badge ug-b-red">Security Agent</span></td>
+            </tr>
+            <tr>
+              <td>Export</td>
+              <td><span class="ug-badge ug-b-ink">Document Agent</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <hr class="ug-rule-t" style="margin: 28px 32px;">
+
+  <!-- SCREEN ANATOMY + ROUTING (2-col) -->
+  <div class="section">
+    <div class="section-head">
+      <span class="ug-lbl">Screen Anatomy</span>
+    </div>
+
+    <div class="ug-cols" style="grid-template-columns: 1fr 1fr; margin-bottom: 0;">
+      <div class="ug-col">
+        <h3>Every Stage Shares This Shell</h3>
+        <div class="anatomy-diagram">
+          <div class="anatomy-row rail">
+            <span>Progress Rail</span>
+            <span style="letter-spacing:0.12em; font-size:10px;">①─②─③─④─⑤</span>
+            <span class="anatomy-label">Named stages, not %</span>
+          </div>
+          <div class="anatomy-row content">
+            Stage content — single focus per view
+          </div>
+          <div class="anatomy-row nav">
+            <span class="anatomy-btn">Back</span>
+            <span class="anatomy-btn primary">Continue</span>
+          </div>
+        </div>
+        <p class="ug-cap" style="margin-top:7px;">
+          StageShell owns the progress rail and nav buttons.
+          Stage content is swapped per view.
+        </p>
+      </div>
+
+      <div class="ug-col">
+        <h3>Routing Rules</h3>
+        <ul class="routing-list">
+          <li>
+            <div class="routing-marker"></div>
+            Stage advances only on explicit user action — no auto-advance.
+          </li>
+          <li>
+            <div class="routing-marker"></div>
+            Back is always available except during Scan (stage 3).
+          </li>
+          <li>
+            <div class="routing-marker"></div>
+            Any stage can surface an "explain this" overlay without leaving the stage.
+          </li>
+          <li>
+            <div class="routing-marker"></div>
+            Human escalation exits the wizard and opens a contact view.
+          </li>
+        </ul>
+
+        <div class="ug-note ug-note-red" style="margin-top:14px;">
+          Human escalation is a full exit — the wizard state is preserved
+          but the current stage is suspended.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="ug-rule-d" style="margin: 28px 32px;">
+
+  <!-- KEY COMPONENTS (3-col) -->
+  <div class="section">
+    <div class="section-head">
+      <span class="ug-lbl">Key Components</span>
+    </div>
+
+    <div class="ug-cols" style="grid-template-columns: repeat(3, 1fr);">
+      <div class="ug-col">
+        <h3>Shell &amp; Navigation</h3>
+        <ul class="component-list">
+          <li>
+            <span class="component-name">StageShell</span>
+            Wraps every stage; owns progress rail + nav buttons.
+          </li>
+          <li>
+            <span class="component-name">AgentStatus</span>
+            Subtle background indicator — scanning / thinking / ready.
+          </li>
+        </ul>
+      </div>
+
+      <div class="ug-col">
+        <h3>Document Layer</h3>
+        <ul class="component-list">
+          <li>
+            <span class="component-name">DocumentViewer</span>
+            Renders uploaded doc with annotation layer (stages 4–5).
+          </li>
+          <li>
+            <span class="component-name">AnnotationOverlay</span>
+            Plain-language tooltips pinned to document regions.
+          </li>
+        </ul>
+      </div>
+
+      <div class="ug-col">
+        <h3>Form &amp; Safety</h3>
+        <ul class="component-list">
+          <li>
+            <span class="component-name">SimplifiedForm</span>
+            Generated field-by-field from document scan results.
+          </li>
+          <li>
+            <span class="component-name">PIIWarning</span>
+            Inline flag on any field touching sensitive data.
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <hr class="ug-rule-t" style="margin: 28px 32px;">
+
+  <!-- STATE SHAPE -->
+  <div class="section">
+    <div class="section-head">
+      <span class="ug-lbl">State Shape</span>
+      <span class="ug-cap">Minimal — single source of truth</span>
+    </div>
+
+    <div class="state-block">
+      <span class="state-brace">{</span><br>
+      &nbsp;&nbsp;<span class="state-key">location</span>&nbsp;&nbsp; <span class="state-type">string,</span><br>
+      &nbsp;&nbsp;<span class="state-key">domain</span>&nbsp;&nbsp;&nbsp; <span class="state-type">string,</span><br>
+      &nbsp;&nbsp;<span class="state-key">stage</span>&nbsp;&nbsp;&nbsp;&nbsp; <span class="state-type">1–7,</span><br>
+      &nbsp;&nbsp;<span class="state-key">document</span>&nbsp; <span class="state-brace">{</span> <span class="state-type">raw, parsed, chunks[]</span> <span class="state-brace">},</span><br>
+      &nbsp;&nbsp;<span class="state-key">form</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="state-brace">{</span> <span class="state-type">fields[], completed[], flagged[]</span> <span class="state-brace">},</span><br>
+      &nbsp;&nbsp;<span class="state-key">agent</span>&nbsp;&nbsp;&nbsp;&nbsp; <span class="state-type">'router' | 'document' | 'domain' | 'security'</span><br>
+      <span class="state-brace">}</span>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="ug-footer">
+    <span class="ug-cap">CivicGuide — Wizard Architecture Reference</span>
+    <span class="ug-cap">Unigrid Design System</span>
+  </div>
+
+</div>
+</body>
+</html>
