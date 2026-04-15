@@ -60,9 +60,10 @@ const MIME = {
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, `http://localhost:${PORT}`);
 
-  // ── Gemini proxy: POST /api/gemini/* ──────────────────
-  if (req.method === 'POST' && url.pathname.startsWith('/api/gemini')) {
-    const geminiPath = url.pathname.replace('/api/gemini', '/v1beta');
+  // ── Gemini proxy: POST /.netlify/functions/gemini ────
+  if (req.method === 'POST' && url.pathname === '/.netlify/functions/gemini') {
+    const model      = url.searchParams.get('model') || 'gemini-2.0-flash';
+    const geminiPath = `/v1beta/models/${model}:generateContent`;
 
     let body = '';
     req.on('data', chunk => { body += chunk; });

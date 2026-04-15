@@ -10,7 +10,7 @@
 
 import { SYSTEM_PROMPT, GEMINI_PROXY_URL, GEMINI_MODEL } from './config.js';
 
-const API_URL = `${GEMINI_PROXY_URL}/models/${GEMINI_MODEL}:generateContent`;
+const API_URL = `${GEMINI_PROXY_URL}?model=${encodeURIComponent(GEMINI_MODEL)}`;
 
 // ── Civic domains the router presents to the user ────────────────
 const DOMAINS = [

@@ -1,0 +1,51 @@
+/**
+ * netlify/functions/gemini.js
+ *
+ * Serverless proxy for Gemini API calls. Keeps the API key
+ * server-side; the client never sees it.
+ *
+ * Called by the client at: POST /api/gemini?model=<model-name>
+ * (Netlify redirects /api/gemini → /.netlify/functions/gemini via netlify.toml)
+ *
+ * Set GEMINI_API_KEY in Netlify → Site settings → Environment variables.
+ */
+
+const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta';
+
+export const handler = async (event) => {
+  if (event.httpMethod !== 'POST') {
+    return { statusCode: 405, body: 'Method Not Allowed' };
+  }
+
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'GEMINI_API_KEY environment variable is not set.' }),
+    };
+  }
+
+  const model = event.queryStringParameters?.model || 'gemini-2.0-flash';
+  const geminiUrl = `${GEMINI_BASE}/models/${model}:generateContent?key=${apiKey}`;
+
+  try {
+    const response = await fetch(geminiUrl, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    event.body,
+    });
+
+    const text = await response.text();
+    return {
+      statusCode: response.status,
+      headers:    { 'Content-Type': 'application/json' },
+      body:       text,
+    };
+  } catch (err) {
+    return {
+      statusCode: 502,
+      headers:    { 'Content-Type': 'application/json' },
+      body:       JSON.stringify({ error: err.message }),
+    };
+  }
+};
