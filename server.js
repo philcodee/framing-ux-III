@@ -62,7 +62,7 @@ const server = http.createServer((req, res) => {
 
   // ── Gemini proxy: POST /.netlify/functions/gemini ────
   if (req.method === 'POST' && url.pathname === '/.netlify/functions/gemini') {
-    const model      = url.searchParams.get('model') || 'gemini-2.0-flash';
+    const model      = url.searchParams.get('model') || 'gemini-2.5-flash';
     const geminiPath = `/v1beta/models/${model}:generateContent`;
 
     let body = '';

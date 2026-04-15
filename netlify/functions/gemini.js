@@ -25,7 +25,7 @@ export const handler = async (event) => {
     };
   }
 
-  const model = event.queryStringParameters?.model || 'gemini-2.0-flash';
+  const model = event.queryStringParameters?.model || 'gemini-2.5-flash';
   const geminiUrl = `${GEMINI_BASE}/models/${model}:generateContent?key=${apiKey}`;
 
   try {
