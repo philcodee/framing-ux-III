@@ -12,6 +12,9 @@
 export const GEMINI_MODEL     = 'gemini-2.5-pro';
 export const GEMINI_PROXY_URL = '/.netlify/functions/gemini';
 
+export const SUPABASE_URL      = 'https://fkvdoqxjdiopopedhswd.supabase.co';
+export const SUPABASE_ANON_KEY = 'sb_publishable_kWVlKJQ6fPINVykmLYKQ1Q_3-NcaAaH';
+
 
 export const SYSTEM_PROMPT = `You are CivicGuide, a multi-agent civic assistance system. Your purpose is to reduce administrative burden by helping users navigate government paperwork, forms, and civic processes.
 
