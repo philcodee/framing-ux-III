@@ -4,3 +4,4 @@
 # Environment variables — never commit secrets
 .env
 *.env
+config.local.js

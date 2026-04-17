@@ -1,0 +1,2123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CivicGuide</title>
+<style>
+
+/* ── CSS Variables ─────────────────────────────────────── */
+
+:root {
+  --ink:      #1A1A18;
+  --ink-2:    #3D3D38;
+  --ink-3:    #6B6B63;
+  --tan:      #C8B89A;
+  --tan-lt:   #E8DDD0;
+  --tan-dk:   #8B7355;
+  --paper:    #F5F0E8;
+  --paper-dk: #EDE5D8;
+  --red:      #C0392B;
+  --red-lt:   #F0D0CC;
+  --rule:     rgba(26,26,24,0.15);
+  --rule-s:   rgba(26,26,24,0.35);
+  --ff-head:  'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --ff-body:  'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --gutter:   12px;
+  --dark:     var(--ink);
+}
+
+[data-theme="dark"] {
+  --paper:    #191714;
+  --paper-dk: #201E1A;
+  --ink:      #EAE0D0;
+  --ink-2:    #C4B49A;
+  --ink-3:    #8B7B65;
+  --tan:      #C8B89A;
+  --tan-lt:   #EAE0D0;
+  --tan-dk:   #A89070;
+  --red:      #CC3D30;
+  --red-lt:   rgba(204,61,48,0.15);
+  --rule:     rgba(234,224,208,0.10);
+  --rule-s:   rgba(234,224,208,0.22);
+  --dark:     #0D0C0A;
+}
+
+/* ── Reset ─────────────────────────────────────────────── */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--ff-head);
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Typography ────────────────────────────────────────── */
+
+.ug-h1  { font-size: 42px; font-weight: 700; letter-spacing: -0.04em; line-height: 1.05; }
+.ug-h2  { font-size: 28px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 22px; color: var(--ink); }
+.ug-h3  { font-size: 19px; font-weight: 700; color: var(--ink); }
+.ug-body{ font-size: 16px; line-height: 1.65; color: var(--ink-2); }
+.ug-cap { font-size: 12px; letter-spacing: 0.08em; color: var(--ink-3); }
+.ug-lbl { font-size: 11px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--tan-dk); }
+
+/* ── Broadside ─────────────────────────────────────────── */
+
+.ug-broadside {
+  background: var(--dark);
+  color: #fff;
+  padding: 14px 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.ug-title {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  color: #fff;
+}
+
+.broadside-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.stage-pill {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 3px 9px;
+  background: transparent;
+  border: 1px solid var(--tan);
+  color: var(--tan);
+  white-space: nowrap;
+}
+
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ink-3);
+  transition: background 0.3s;
+  flex-shrink: 0;
+}
+
+.status-dot.thinking { background: var(--tan); animation: dotpulse 1s ease-in-out infinite; }
+.status-dot.ready    { background: #5a9e6f; }
+
+@keyframes dotpulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.35; }
+}
+
+.theme-toggle {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: none;
+  border: 1px solid rgba(200,184,154,0.35);
+  color: var(--tan-dk);
+  padding: 3px 8px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+
+.theme-toggle:hover { border-color: var(--tan); color: var(--tan); }
+
+/* ── Stage Track ───────────────────────────────────────── */
+
+.ug-stage-track {
+  display: flex;
+  align-items: flex-start;
+  border-bottom: 2px solid var(--ink);
+  background: var(--paper-dk);
+  flex-shrink: 0;
+}
+
+.ug-stage {
+  flex: 1;
+  padding: 10px 14px 12px;
+  position: relative;
+  border-right: 1px solid var(--rule);
+}
+
+.ug-stage:last-child { border-right: none; }
+
+.ug-stage-num  { font-size: 11px; font-weight: 700; letter-spacing: 0.12em; color: var(--ink-3); margin-bottom: 3px; }
+.ug-stage-name { font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); }
+
+.ug-stage.is-done .ug-stage-num,
+.ug-stage.is-done .ug-stage-name { color: var(--tan-dk); }
+
+.ug-stage.is-done::after,
+.ug-stage.is-active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px; left: 0; right: 0;
+  height: 2px;
+}
+
+.ug-stage.is-done::after   { background: var(--tan-dk); }
+.ug-stage.is-active::after { background: var(--red); }
+
+.ug-stage.is-active { background: var(--paper); }
+.ug-stage.is-active .ug-stage-num  { color: var(--red); }
+.ug-stage.is-active .ug-stage-name { color: var(--ink); }
+
+/* ── Main content area ─────────────────────────────────── */
+
+.civicguide-main {
+  flex: 1;
+  max-width: 900px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 40px 32px 60px;
+}
+
+/* ── Phases ────────────────────────────────────────────── */
+
+.phase { display: none; }
+.phase.is-active { display: block; }
+
+/* ── Breadcrumb ────────────────────────────────────────── */
+
+.ug-breadcrumb {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--tan-dk);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.ug-breadcrumb-sep { color: var(--ink-3); font-weight: 400; }
+
+/* ── Hint Zone ─────────────────────────────────────────── */
+
+.ug-hint {
+  padding: 10px 14px;
+  background: var(--paper-dk);
+  border: 1px solid var(--rule);
+  font-size: 15px;
+  color: var(--ink-2);
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+.ug-hint.is-visible { display: block; }
+
+.ug-hint-attr {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--tan-dk);
+  margin-top: 6px;
+}
+
+/* thinking animation inside hint */
+.hint-thinking {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 22px;
+}
+
+.dot-pulse {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--tan-dk);
+  animation: pulse 1.2s infinite;
+  flex-shrink: 0;
+}
+.dot-pulse:nth-child(2) { animation-delay: 0.2s; }
+.dot-pulse:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes pulse {
+  0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); }
+  40%            { opacity: 1;   transform: scale(1); }
+}
+
+/* ── Location Input ────────────────────────────────────── */
+
+.ug-loc-field { display: flex; }
+
+.ug-loc-input {
+  flex: 1;
+  font-family: var(--ff-body);
+  font-size: 16px;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--rule-s);
+  border-right: none;
+  padding: 10px 12px;
+  outline: none;
+  min-width: 0;
+}
+
+.ug-loc-input:focus     { border-color: var(--ink); }
+.ug-loc-input::placeholder { color: var(--ink-3); }
+
+.ug-loc-btn {
+  font-family: var(--ff-head);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  background: var(--dark);
+  color: var(--tan-lt);
+  border: 1px solid var(--ink);
+  padding: 10px 16px;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: opacity 0.15s;
+}
+
+.ug-loc-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ── Domain Grid ───────────────────────────────────────── */
+
+.ug-domain-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.ug-domain-tile {
+  padding: 16px 14px;
+  border: 1px solid var(--rule-s);
+  cursor: pointer;
+  background: var(--paper);
+  transition: border-color 0.12s, background 0.12s;
+}
+
+.ug-domain-tile:hover { border-color: var(--ink-3); }
+.ug-domain-tile.is-selected { background: var(--dark); border-color: var(--ink); }
+
+.ug-domain-name { font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink); }
+.ug-domain-sub  { font-size: 11px; color: var(--ink-3); margin-top: 3px; line-height: 1.4; }
+
+.ug-domain-tile.is-selected .ug-domain-name { color: var(--tan-lt); }
+.ug-domain-tile.is-selected .ug-domain-sub  { color: var(--tan-dk); }
+
+/* ── Scoped Dropdown ───────────────────────────────────── */
+
+.ug-select-label { font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--tan-dk); margin-bottom: 7px; }
+.ug-select-wrap  { position: relative; display: block; width: 100%; }
+
+.ug-select {
+  appearance: none;
+  width: 100%;
+  font-family: var(--ff-body);
+  font-size: 16px;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--rule-s);
+  padding: 10px 36px 10px 12px;
+  outline: none;
+  cursor: pointer;
+}
+
+.ug-select:focus { border-color: var(--ink); }
+
+.ug-select-arrow {
+  pointer-events: none;
+  position: absolute;
+  right: 12px; top: 50%;
+  transform: translateY(-50%);
+  font-size: 10px;
+  color: var(--ink-3);
+}
+
+/* ── Binary Choice Card ────────────────────────────────── */
+
+.choice-pair-wrap {
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height 0.38s ease;
+  margin-top: 20px;
+}
+
+.choice-pair-wrap.is-open { max-height: 400px; }
+
+.ug-choice-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.ug-choice-card {
+  padding: 22px 20px;
+  border: 1px solid var(--rule-s);
+  cursor: pointer;
+  background: var(--paper);
+  transition: border-color 0.12s, background 0.12s;
+}
+
+.ug-choice-card:hover { border-color: var(--ink-3); }
+.ug-choice-card.is-selected { background: var(--dark); border-color: var(--ink); }
+
+.ug-choice-top   { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 10px; }
+.ug-choice-mark  { width: 14px; height: 14px; border: 1px solid var(--rule-s); border-radius: 50%; flex-shrink: 0; margin-top: 2px; }
+.ug-choice-label { font-size: 16px; font-weight: 700; letter-spacing: -0.01em; color: var(--ink); }
+.ug-choice-desc  { font-size: 15px; line-height: 1.55; color: var(--ink-3); }
+
+.ug-choice-card.is-selected .ug-choice-label { color: var(--tan-lt); }
+.ug-choice-card.is-selected .ug-choice-desc  { color: var(--tan-dk); }
+.ug-choice-card.is-selected .ug-choice-mark  { border-color: var(--tan); background: var(--red); }
+
+/* ── Field + Help ──────────────────────────────────────── */
+
+.ug-field-wrap      { margin-bottom: 20px; }
+.ug-field-label-row { display: flex; align-items: center; gap: 7px; margin-bottom: 7px; }
+.ug-field-label     { font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--tan-dk); }
+
+.ug-field-help {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px; height: 14px;
+  border: 1px solid var(--rule-s);
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--ink-3);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: border-color 0.12s, color 0.12s;
+}
+
+.ug-field-help:hover,
+.ug-field-help.is-open { border-color: var(--ink); color: var(--ink); }
+
+.ug-field-input {
+  width: 100%;
+  font-family: var(--ff-body);
+  font-size: 16px;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--rule-s);
+  padding: 10px 12px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.ug-field-input:focus { border-color: var(--ink); }
+.ug-field-input.is-confirmed { border-color: var(--tan-dk); }
+
+textarea.ug-field-input { resize: vertical; min-height: 120px; line-height: 1.6; }
+
+.field-hint {
+  margin-top: 7px;
+  padding: 9px 12px;
+  background: var(--paper-dk);
+  border: 1px solid var(--rule);
+  font-size: 14px;
+  color: var(--ink-2);
+  line-height: 1.6;
+  display: none;
+}
+
+.field-hint.is-open { display: block; }
+
+/* ── Upload Zone ───────────────────────────────────────── */
+
+.ug-upload-zone {
+  border: 1px dashed var(--rule-s);
+  padding: 48px 24px;
+  text-align: center;
+  background: var(--paper-dk);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  margin-bottom: 16px;
+}
+
+.ug-upload-zone:hover          { border-color: var(--ink-3); }
+.ug-upload-zone.is-dragging    { border-color: var(--ink); background: var(--paper); }
+.ug-upload-zone.is-confirmed   { border: 1px solid var(--tan-dk); background: var(--paper); cursor: default; }
+
+.upload-icon { font-size: 24px; color: var(--ink-3); margin-bottom: 12px; }
+.upload-label { font-size: 13px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); }
+.upload-sub   { font-size: 12px; color: var(--ink-3); margin-top: 6px; }
+
+.upload-confirmed-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: center;
+}
+
+.upload-progress-wrap {
+  display: none;
+  margin-bottom: 16px;
+}
+
+.upload-progress-bar {
+  height: 2px;
+  background: var(--rule);
+  overflow: hidden;
+}
+
+.upload-progress-fill {
+  height: 100%;
+  background: var(--tan-dk);
+  width: 0%;
+  transition: width 0.05s linear;
+}
+
+.upload-progress-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-top: 5px;
+}
+
+/* ── Badge ─────────────────────────────────────────────── */
+
+.ug-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+}
+
+.ug-b-tan { background: var(--tan); color: var(--ink); }
+.ug-b-ink { background: var(--dark); color: var(--tan-lt); }
+
+/* ── Annotate Expand ───────────────────────────────────── */
+
+.ug-annotate-block { border-top: 2px solid var(--ink); margin: 24px 0; }
+.ug-annotate-row   { border-bottom: 1px solid var(--rule); }
+
+.ug-annotate-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  cursor: pointer;
+  user-select: none;
+}
+
+.ug-ann-label  { font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-2); }
+.ug-ann-toggle { font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3); transition: color 0.12s; }
+
+.ug-annotate-trigger:hover .ug-ann-label,
+.ug-annotate-trigger:hover .ug-ann-toggle { color: var(--ink); }
+
+.ug-annotate-body         { display: none; padding: 0 0 14px; }
+.ug-annotate-body.is-open { display: block; }
+
+/* ── Review Card ───────────────────────────────────────── */
+
+.ug-review     { border-top: 3px solid var(--ink); }
+
+.ug-review table { width: 100%; border-collapse: collapse; margin-top: 4px; }
+
+.ug-review td {
+  padding: 9px 0;
+  border-bottom: 1px solid var(--rule);
+  font-size: 15px;
+  color: var(--ink-2);
+  vertical-align: top;
+}
+
+.ug-review td:first-child {
+  width: 140px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  padding-right: 16px;
+  padding-top: 11px;
+}
+
+.ug-review td:last-child { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+
+.ug-review tr:last-child td { border-bottom: none; }
+
+.ug-review-edit {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--tan-dk);
+  background: none;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  padding: 2px 0;
+}
+
+.ug-review-edit:hover { color: var(--red); }
+
+.ug-review-actions { margin-top: 20px; display: flex; gap: 10px; align-items: center; }
+
+/* ── Buttons ───────────────────────────────────────────── */
+
+.ug-confirm-btn {
+  font-family: var(--ff-head);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  background: var(--dark);
+  color: var(--tan-lt);
+  border: none;
+  padding: 11px 22px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.ug-confirm-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+.ug-confirm-btn:hover:not(:disabled) { opacity: 0.85; }
+.ug-confirm-btn.is-success { background: var(--tan-dk); }
+
+.ug-back-btn {
+  font-family: var(--ff-head);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  background: none;
+  border: 1px solid var(--rule-s);
+  color: var(--ink-3);
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: border-color 0.12s, color 0.12s;
+}
+
+.ug-back-btn:hover { border-color: var(--ink-3); color: var(--ink); }
+
+/* ── Phase actions row ─────────────────────────────────── */
+
+.phase-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid var(--rule);
+}
+
+/* ── Char counter ──────────────────────────────────────── */
+
+.char-count {
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--ink-3);
+  text-align: right;
+  margin-top: 5px;
+}
+
+/* ── Submit success ────────────────────────────────────── */
+
+.submit-success {
+  display: none;
+  margin-top: 20px;
+  padding: 12px 16px;
+  border: 1px solid var(--tan-dk);
+  background: var(--paper-dk);
+  font-size: 15px;
+  color: var(--ink-2);
+  line-height: 1.6;
+}
+
+.submit-success.is-visible { display: block; }
+
+/* ── Agent Brief ───────────────────────────────────────── */
+
+.agent-brief {
+  background: var(--dark);
+  padding: 16px 20px 20px;
+  margin-bottom: 32px;
+}
+
+.agent-brief-inner {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.agent-role-badge {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--tan-dk);
+  border: 1px solid rgba(200,184,154,0.25);
+  padding: 3px 8px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+
+.agent-brief-content {
+  flex: 1;
+  min-height: 24px;
+}
+
+.agent-brief-thinking {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 0;
+}
+
+.agent-brief .dot-pulse { background: var(--tan-dk); }
+
+.agent-brief-text {
+  font-family: var(--ff-body);
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--tan-lt);
+  margin: 0;
+  display: none;
+}
+
+/* ── Mobile ────────────────────────────────────────────── */
+
+@media (max-width: 640px) {
+  .civicguide-main { padding: 28px 18px 48px; }
+  .ug-domain-grid  { grid-template-columns: repeat(2, 1fr); }
+  .ug-choice-pair  { grid-template-columns: 1fr; }
+  .ug-stage-name   { display: none; }
+  .ug-stage        { padding: 10px 8px 12px; }
+}
+
+/* ── Auth Screen ───────────────────────────────────────── */
+
+#auth-screen {
+  position: fixed;
+  inset: 0;
+  background: var(--paper);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+#auth-screen.is-hidden { display: none; }
+
+.auth-card {
+  width: 100%;
+  max-width: 400px;
+  padding: 0 24px;
+}
+
+.auth-card .ug-title {
+  font-family: var(--ff-head);
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+
+.auth-card .auth-sub {
+  font-family: var(--ff-body);
+  font-size: 13px;
+  color: var(--ink-3);
+  margin-bottom: 28px;
+  line-height: 1.6;
+}
+
+.auth-card .ug-lbl { margin-bottom: 7px; display: block; }
+
+.auth-input {
+  width: 100%;
+  font-family: var(--ff-head);
+  font-size: 14px;
+  color: var(--ink);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid var(--ink);
+  padding: 8px 0;
+  outline: none;
+  margin-bottom: 20px;
+}
+
+.auth-input::placeholder { color: var(--ink-3); }
+
+.auth-sent {
+  display: none;
+  font-family: var(--ff-body);
+  font-size: 13px;
+  color: var(--ink-2);
+  line-height: 1.7;
+  border-left: 3px solid var(--ink);
+  padding: 10px 14px;
+  background: rgba(0,0,0,0.04);
+}
+
+.auth-sent.is-visible { display: block; }
+
+/* ── Profile Screen ────────────────────────────────────── */
+
+#profile-screen {
+  position: fixed;
+  inset: 0;
+  background: var(--paper);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+#profile-screen.is-visible { display: flex; }
+
+.profile-card {
+  width: 100%;
+  max-width: 400px;
+  padding: 0 24px;
+}
+
+.profile-card .profile-title {
+  font-family: var(--ff-head);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+
+.profile-card .profile-sub {
+  font-family: var(--ff-body);
+  font-size: 13px;
+  color: var(--ink-3);
+  margin-bottom: 28px;
+  line-height: 1.6;
+}
+
+.profile-field {
+  margin-bottom: 22px;
+}
+
+.profile-field .ug-lbl { display: block; margin-bottom: 7px; }
+
+.profile-field input {
+  width: 100%;
+  font-family: var(--ff-head);
+  font-size: 14px;
+  color: var(--ink);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid var(--ink);
+  padding: 8px 0;
+  outline: none;
+}
+
+.profile-field input::placeholder { color: var(--ink-3); }
+
+</style>
+</head>
+<body>
+
+<!-- ── Auth Screen ──────────────────────────────────────── -->
+
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="ug-title">CivicGuide</div>
+    <p class="auth-sub">Enter your email to receive a sign-in link. No password needed.</p>
+    <label class="ug-lbl" for="auth-email">Email address</label>
+    <input class="auth-input" id="auth-email" type="email" placeholder="you@example.com" autocomplete="email">
+    <button class="ug-confirm-btn" id="auth-submit-btn">Send sign-in link</button>
+    <div class="auth-sent" id="auth-sent">
+      Check your inbox — a sign-in link is on its way. You can close this tab and click the link from any device.
+    </div>
+  </div>
+</div>
+
+<!-- ── Profile Screen ───────────────────────────────────── -->
+
+<div id="profile-screen">
+  <div class="profile-card">
+    <div class="profile-title">Welcome to CivicGuide</div>
+    <p class="profile-sub">Tell us a bit about yourself so we can skip the setup questions next time.</p>
+    <div class="profile-field">
+      <label class="ug-lbl" for="profile-name">Your name</label>
+      <input id="profile-name" type="text" placeholder="First name or full name" autocomplete="name">
+    </div>
+    <div class="profile-field">
+      <label class="ug-lbl" for="profile-location">Your city or ZIP code</label>
+      <input id="profile-location" type="text" placeholder="e.g. Portland, OR or 97201" autocomplete="address-level2">
+    </div>
+    <div style="display:flex; gap:10px; align-items:center; margin-top:8px;">
+      <button class="ug-confirm-btn" id="profile-save-btn">Save and continue</button>
+      <button class="ug-back-btn" id="profile-skip-btn">Skip for now</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Global Shell ─────────────────────────────────────── -->
+
+<header class="ug-broadside">
+  <span class="ug-title">CivicGuide</span>
+  <div class="broadside-right">
+    <span class="stage-pill" id="stage-pill">Stage 1 — Location</span>
+    <div class="status-dot" id="status-dot"></div>
+    <button class="theme-toggle" id="theme-toggle">Light</button>
+  </div>
+</header>
+
+<nav class="ug-stage-track" id="stage-track">
+  <div class="ug-stage is-active" id="st-1">
+    <div class="ug-stage-num">01</div>
+    <div class="ug-stage-name">Location</div>
+  </div>
+  <div class="ug-stage" id="st-2">
+    <div class="ug-stage-num">02</div>
+    <div class="ug-stage-name">Domain</div>
+  </div>
+  <div class="ug-stage" id="st-3">
+    <div class="ug-stage-num">03</div>
+    <div class="ug-stage-name">Document</div>
+  </div>
+  <div class="ug-stage" id="st-4">
+    <div class="ug-stage-num">04</div>
+    <div class="ug-stage-name">Input</div>
+  </div>
+  <div class="ug-stage" id="st-5">
+    <div class="ug-stage-num">05</div>
+    <div class="ug-stage-name">Fill</div>
+  </div>
+  <div class="ug-stage" id="st-6">
+    <div class="ug-stage-num">06</div>
+    <div class="ug-stage-name">Review</div>
+  </div>
+</nav>
+
+<!-- ── Main Content ─────────────────────────────────────── -->
+
+<main class="civicguide-main">
+
+  <!-- Phase 1 — Location -->
+  <section class="phase is-active" id="phase-1">
+    <div class="agent-brief" id="brief-p1">
+      <div class="agent-brief-inner">
+        <span class="agent-role-badge" id="brief-p1-role">Router</span>
+        <div class="agent-brief-content">
+          <div class="agent-brief-thinking" id="brief-p1-thinking">
+            <div class="dot-pulse"></div><div class="dot-pulse"></div><div class="dot-pulse"></div>
+          </div>
+          <p class="agent-brief-text" id="brief-p1-text"></p>
+        </div>
+      </div>
+    </div>
+    <div class="ug-lbl" style="margin-bottom: 7px">Your Location</div>
+    <div class="ug-loc-field">
+      <input class="ug-loc-input" id="loc-input" type="text" placeholder="City or ZIP code" autocomplete="off">
+      <button class="ug-loc-btn" id="loc-geo-btn">Use My Location</button>
+    </div>
+    <div class="phase-actions">
+      <button class="ug-confirm-btn" id="btn-p1" disabled>Continue</button>
+    </div>
+  </section>
+
+  <!-- Phase 2 — Domain -->
+  <section class="phase" id="phase-2">
+    <div class="agent-brief" id="brief-p2">
+      <div class="agent-brief-inner">
+        <span class="agent-role-badge" id="brief-p2-role">Router</span>
+        <div class="agent-brief-content">
+          <div class="agent-brief-thinking" id="brief-p2-thinking">
+            <div class="dot-pulse"></div><div class="dot-pulse"></div><div class="dot-pulse"></div>
+          </div>
+          <p class="agent-brief-text" id="brief-p2-text"></p>
+        </div>
+      </div>
+    </div>
+    <div class="ug-breadcrumb" id="bc-p2"></div>
+    <h2 class="ug-h2">What area do you need help with?</h2>
+    <div class="ug-domain-grid" id="domain-grid"></div>
+    <div class="ug-hint" id="hint-p2" style="display:none">
+      <span id="hint-p2-text"></span>
+      <span class="ug-hint-attr">CivicGuide — Domain</span>
+    </div>
+  </section>
+
+  <!-- Phase 3 — Document Type -->
+  <section class="phase" id="phase-3">
+    <div class="agent-brief" id="brief-p3">
+      <div class="agent-brief-inner">
+        <span class="agent-role-badge" id="brief-p3-role">Domain Expert</span>
+        <div class="agent-brief-content">
+          <div class="agent-brief-thinking" id="brief-p3-thinking">
+            <div class="dot-pulse"></div><div class="dot-pulse"></div><div class="dot-pulse"></div>
+          </div>
+          <p class="agent-brief-text" id="brief-p3-text"></p>
+        </div>
+      </div>
+    </div>
+    <div class="ug-breadcrumb" id="bc-p3"></div>
+    <h2 class="ug-h2">What do you need help with?</h2>
+    <div class="ug-hint" id="hint-p3" style="display:none">
+      <span id="hint-p3-text"></span>
+      <span class="ug-hint-attr">CivicGuide — Document</span>
+    </div>
+    <div class="ug-select-label">Document Type</div>
+    <div class="ug-select-wrap">
+      <select class="ug-select" id="doc-type-select"></select>
+      <span class="ug-select-arrow">▾</span>
+    </div>
+    <div class="choice-pair-wrap" id="choice-pair-wrap">
+      <div class="ug-lbl" style="margin-bottom: 12px; margin-top: 4px">How would you like to proceed?</div>
+      <div class="ug-choice-pair">
+        <div class="ug-choice-card" data-method="upload" id="choice-upload">
+          <div class="ug-choice-top">
+            <div class="ug-choice-label">Upload a document</div>
+            <div class="ug-choice-mark"></div>
+          </div>
+          <div class="ug-choice-desc">You have a letter, notice, or form you received.</div>
+        </div>
+        <div class="ug-choice-card" data-method="describe" id="choice-describe">
+          <div class="ug-choice-top">
+            <div class="ug-choice-label">Describe your situation</div>
+            <div class="ug-choice-mark"></div>
+          </div>
+          <div class="ug-choice-desc">No document yet. Tell us what happened.</div>
+        </div>
+      </div>
+    </div>
+    <div class="phase-actions">
+      <button class="ug-confirm-btn" id="btn-p3" disabled>Continue</button>
+      <button class="ug-back-btn" onclick="back()">Back</button>
+    </div>
+  </section>
+
+  <!-- Phase 4 — Input -->
+  <section class="phase" id="phase-4">
+    <div class="agent-brief" id="brief-p4">
+      <div class="agent-brief-inner">
+        <span class="agent-role-badge" id="brief-p4-role">Document Agent</span>
+        <div class="agent-brief-content">
+          <div class="agent-brief-thinking" id="brief-p4-thinking">
+            <div class="dot-pulse"></div><div class="dot-pulse"></div><div class="dot-pulse"></div>
+          </div>
+          <p class="agent-brief-text" id="brief-p4-text"></p>
+        </div>
+      </div>
+    </div>
+    <div class="ug-breadcrumb" id="bc-p4"></div>
+    <h2 class="ug-h2" id="p4-heading">Upload your document</h2>
+
+    <!-- Upload path -->
+    <div id="p4-upload">
+      <div class="ug-upload-zone" id="upload-zone">
+        <div class="upload-icon">↑</div>
+        <div class="upload-label">Drop your document here</div>
+        <div class="upload-sub">or <span style="text-decoration:underline; cursor:pointer" onclick="document.getElementById('file-input').click()">choose a file</span></div>
+        <input type="file" id="file-input" style="display:none" accept=".pdf,.doc,.docx,.jpg,.png,.jpeg">
+      </div>
+      <div class="upload-progress-wrap" id="upload-progress">
+        <div class="upload-progress-bar"><div class="upload-progress-fill" id="progress-fill"></div></div>
+        <div class="upload-progress-label" id="progress-label">Uploading…</div>
+      </div>
+    </div>
+
+    <!-- Describe path -->
+    <div id="p4-describe" style="display:none">
+      <div class="ug-field-wrap">
+        <div class="ug-field-label-row">
+          <span class="ug-field-label">Describe your situation</span>
+          <span class="ug-field-help" id="desc-help-btn">?</span>
+        </div>
+        <textarea class="ug-field-input" id="p4-textarea" placeholder="Tell us what happened and what you need help with…"></textarea>
+        <div class="field-hint" id="hint-desc">
+          Be specific about the problem and what outcome you're looking for. Include any relevant dates, amounts, or reference numbers. You don't need to be formal — plain language is fine.
+          <span class="ug-hint-attr">CivicGuide — Document guidance</span>
+        </div>
+        <div class="char-count" id="char-count">0 / 800</div>
+      </div>
+    </div>
+
+    <!-- Agent hint (fires after input) -->
+    <div class="ug-hint" id="hint-p4" style="display:none">
+      <span id="hint-p4-text"></span>
+      <span class="ug-hint-attr">CivicGuide — Input analysis</span>
+    </div>
+
+    <div class="phase-actions">
+      <button class="ug-confirm-btn" id="btn-p4" disabled>Analyze</button>
+      <button class="ug-back-btn" onclick="back()">Back</button>
+    </div>
+  </section>
+
+  <!-- Phase 5 — Fill -->
+  <section class="phase" id="phase-5">
+    <div class="agent-brief" id="brief-p5">
+      <div class="agent-brief-inner">
+        <span class="agent-role-badge" id="brief-p5-role">Document Agent</span>
+        <div class="agent-brief-content">
+          <div class="agent-brief-thinking" id="brief-p5-thinking">
+            <div class="dot-pulse"></div><div class="dot-pulse"></div><div class="dot-pulse"></div>
+          </div>
+          <p class="agent-brief-text" id="brief-p5-text"></p>
+        </div>
+      </div>
+    </div>
+    <div class="ug-breadcrumb" id="bc-p5"></div>
+    <h2 class="ug-h2">Fill in the required fields</h2>
+    <div class="ug-annotate-block" id="annotate-block"></div>
+    <div id="phase5-fields"></div>
+    <div class="phase-actions">
+      <button class="ug-confirm-btn" id="btn-p5" disabled>Continue</button>
+      <button class="ug-back-btn" onclick="back()">Back</button>
+    </div>
+  </section>
+
+  <!-- Phase 6 — Review -->
+  <section class="phase" id="phase-6">
+    <div class="agent-brief" id="brief-p6">
+      <div class="agent-brief-inner">
+        <span class="agent-role-badge" id="brief-p6-role">Security Agent</span>
+        <div class="agent-brief-content">
+          <div class="agent-brief-thinking" id="brief-p6-thinking">
+            <div class="dot-pulse"></div><div class="dot-pulse"></div><div class="dot-pulse"></div>
+          </div>
+          <p class="agent-brief-text" id="brief-p6-text"></p>
+        </div>
+      </div>
+    </div>
+    <div class="ug-breadcrumb" id="bc-p6"></div>
+    <h2 class="ug-h2">Review your submission</h2>
+    <div class="ug-review">
+      <table id="review-table"></table>
+      <div class="ug-review-actions" id="review-actions">
+        <button class="ug-confirm-btn" id="btn-submit">Confirm &amp; Submit</button>
+        <button class="ug-back-btn" onclick="back()">Back</button>
+      </div>
+    </div>
+    <div class="submit-success" id="submit-success">
+      <span id="hint-p6-text"></span>
+      <span class="ug-hint-attr">CivicGuide — Next steps</span>
+    </div>
+  </section>
+
+</main>
+
+<script type="module">
+
+import { GEMINI_MODEL, GEMINI_PROXY_URL, SYSTEM_PROMPT } from './config.js';
+import { supabase } from './supabase.js';
+import { getSession, sendMagicLink, onAuthChange, ensureProfile, getProfile, updateProfile } from './auth.js';
+
+
+// ── State ───────────────────────────────────────────────
+
+const state = {
+  location:    null,
+  domain:      null,
+  docType:     null,
+  method:      null,
+  fields:      {},
+  agentStatus: 'idle'
+};
+
+let currentPhase = 1;
+
+// ── Gemini API ───────────────────────────────────────────
+// Routes through the server-side proxy (server.js locally,
+// netlify/functions/gemini.js in production). API key never
+// touches the client.
+
+const API_URL = `${GEMINI_PROXY_URL}?model=${encodeURIComponent(GEMINI_MODEL)}`;
+
+function buildContextNote() {
+  const parts = [];
+  if (state.location) parts.push(`User location: ${state.location}.`);
+  if (state.domain)   parts.push(`Domain: ${state.domain}.`);
+  if (state.docType)  parts.push(`Document type: ${state.docType}.`);
+  // Append wizard-mode instruction so responses are brief inline hints
+  parts.push('You are currently providing brief inline hints for a wizard UI. Keep each response to 1–3 sentences. No bullet points — flowing prose only.');
+  return parts.join(' ');
+}
+
+async function callGemini(prompt, maxTokens) {
+  try {
+    const res = await fetch(API_URL, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        system_instruction: { parts: [{ text: `${SYSTEM_PROMPT}\n\n${buildContextNote()}` }] },
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { maxOutputTokens: maxTokens || 150, temperature: 0.4 }
+      })
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || null;
+  } catch {
+    return null;
+  }
+}
+
+// Calls Gemini (or falls back to canned text), runs thinking animation, fires onDone
+async function agentRespond(prompt, fallback, minDelay, onDone) {
+  state.agentStatus = 'thinking';
+  document.getElementById('status-dot').classList.add('thinking');
+  const t0 = Date.now();
+
+  const text = (await callGemini(prompt)) ?? fallback;
+
+  const elapsed = Date.now() - t0;
+  const wait = Math.max(0, (minDelay || 500) - elapsed);
+  await new Promise(r => setTimeout(r, wait));
+
+  state.agentStatus = 'idle';
+  document.getElementById('status-dot').classList.remove('thinking');
+  onDone?.(text);
+}
+
+// ── Data ────────────────────────────────────────────────
+
+const DOMAINS = [
+  { key: 'dmv',       name: 'DMV',       sub: 'Licenses, registration, ID' },
+  { key: 'housing',   name: 'Housing',   sub: 'Vouchers, rental assistance' },
+  { key: 'benefits',  name: 'Benefits',  sub: 'SNAP, Medicaid, assistance' },
+  { key: 'courts',    name: 'Courts',    sub: 'Civil filings, summons' },
+  { key: 'parks',     name: 'Parks',     sub: 'Permits, reservations' },
+  { key: 'education', name: 'Education', sub: 'Enrollment, transfers, IEP' },
+];
+
+const DOC_TYPES = {
+  dmv:       ['Driver License Renewal', 'Vehicle Registration', 'ID Card Application', 'Title Transfer', 'REAL ID Application'],
+  housing:   ['Section 8 Voucher Application', 'Emergency Rental Assistance', 'Public Housing Application', 'Lease Dispute Notice', 'Eviction Response'],
+  benefits:  ['SNAP Application', 'Medicaid Enrollment', 'Cash Assistance', 'HEAP Energy Assistance', 'Child Care Subsidy'],
+  courts:    ['Small Claims Filing', 'Traffic Violation Response', 'Restraining Order Request', 'Name Change Petition', 'Civil Summons Response'],
+  parks:     ['Park Use Permit', 'Event Permit', 'Vendor License', 'Athletic Field Reservation'],
+  education: ['School Enrollment', 'Special Education Request', 'Transfer Application', 'Free/Reduced Lunch Application', 'Homeschool Registration'],
+};
+
+const PHASE5_FIELDS = {
+  dmv: [
+    { name: 'fullName',   label: 'Full Legal Name',    placeholder: 'As shown on your ID',  hint: 'Enter your name exactly as it appears on your current driver license or state ID. Do not use nicknames.' },
+    { name: 'licenseNum', label: 'License / ID Number', placeholder: 'e.g. D1234567',         hint: 'Your current license or ID number. Found on the front of your card, top right.' },
+    { name: 'dob',        label: 'Date of Birth',       placeholder: 'MM/DD/YYYY',             hint: 'Use the format MM/DD/YYYY. This must match DMV records exactly.' },
+  ],
+  housing: [
+    { name: 'fullName', label: 'Full Legal Name',      placeholder: 'As shown on lease or ID',         hint: 'Use your legal name as it appears on your lease agreement or government-issued ID.' },
+    { name: 'address',  label: 'Current Address',      placeholder: 'Street, City, State, ZIP',        hint: 'Provide your full current mailing address including apartment number if applicable.' },
+    { name: 'caseNum',  label: 'Case or Reference No', placeholder: 'If provided by agency',           hint: 'Check any prior correspondence from the housing authority. Leave blank if you have not been assigned one.' },
+  ],
+  benefits: [
+    { name: 'fullName',      label: 'Full Legal Name',   placeholder: 'As shown on government ID',  hint: 'Use your name exactly as it appears on your Social Security card or government ID.' },
+    { name: 'ssn',           label: 'Last 4 of SSN',     placeholder: 'XXXX',                        hint: 'Only the last 4 digits of your Social Security Number are required for verification.' },
+    { name: 'householdSize', label: 'Household Size',    placeholder: 'Number of people',            hint: 'Include yourself and all people who live and eat with you, including children.' },
+  ],
+  courts: [
+    { name: 'fullName',  label: 'Full Legal Name', placeholder: 'As it appears on summons',    hint: 'Use the exact name shown on your court document. Errors here can delay your case.' },
+    { name: 'caseNum',   label: 'Case Number',     placeholder: 'e.g. 2025-CV-00847',           hint: 'Found in the top right corner of your court summons or notice. Required for all submissions.' },
+    { name: 'courtDate', label: 'Court Date',      placeholder: 'MM/DD/YYYY',                   hint: 'The date shown on your notice. If you have already appeared, enter the most recent date.' },
+  ],
+  parks: [
+    { name: 'fullName',  label: 'Contact Name',         placeholder: 'Event organizer or applicant', hint: 'The person responsible for the permit. This person will be contacted by the parks department.' },
+    { name: 'eventDate', label: 'Requested Date',       placeholder: 'MM/DD/YYYY',                   hint: 'The date you wish to use the facility. Submit at least 10 business days in advance.' },
+    { name: 'groupSize', label: 'Expected Attendance',  placeholder: 'Approximate number',           hint: 'Your best estimate of total attendees. This determines which permit tier applies.' },
+  ],
+  education: [
+    { name: 'studentName', label: "Student's Full Name", placeholder: 'Legal name',               hint: "Use the student's legal name as it appears on their birth certificate or prior school records." },
+    { name: 'dob',         label: 'Date of Birth',       placeholder: 'MM/DD/YYYY',               hint: "Student's date of birth. Required to determine grade placement." },
+    { name: 'address',     label: 'Home Address',        placeholder: 'Street, City, State, ZIP', hint: 'Must be a current address within the school district boundary.' },
+  ],
+};
+
+const ANNOTATIONS = {
+  dmv: [
+    { label: 'Section 1 — Identification',      text: "This section verifies your identity. You'll need your current license number and the name on file. Any mismatch with DMV records will flag the application for manual review." },
+    { label: 'Section 2 — Eligibility',          text: 'The DMV checks for outstanding violations, unpaid fines, or suspensions before processing renewals. Unresolved issues must be cleared before your renewal can proceed.' },
+    { label: 'Section 3 — Medical Clearance',    text: 'For drivers over 70 or with certain medical conditions, a physician\'s certification may be required. Review the eligibility notes in your renewal notice.' },
+    { label: 'Section 4 — Payment',              text: 'Renewal fees vary by license class and term length. Payment is due at submission. Fee waivers are available for low-income applicants — see Section 6 of the form.' },
+  ],
+  housing: [
+    { label: 'Section 1 — Applicant Status',     text: 'Establishes your current housing status and reason for applying. Be accurate — misrepresentation can disqualify your application and affect future eligibility.' },
+    { label: 'Section 2 — Income Verification',  text: 'Documents showing current income are required. This includes pay stubs, benefit letters, or a self-certification form if income is informal.' },
+    { label: 'Section 3 — Household Composition',text: 'List all household members. Failing to include someone who lives with you may result in a smaller voucher than you qualify for.' },
+  ],
+  benefits: [
+    { label: 'Section 1 — Household Income',     text: 'Report all household income including wages, benefits, and informal sources. Income limits vary by program and household size.' },
+    { label: 'Section 2 — Assets',               text: 'Some programs require disclosing savings, vehicles, or other assets. Amounts over program thresholds may affect eligibility.' },
+    { label: 'Section 3 — Documentation',        text: "You'll need to provide proof of identity, residency, and income. Originals or certified copies are typically required at intake." },
+  ],
+  courts: [
+    { label: 'Section 1 — Case Identification',  text: 'Your case number and court location are required. An incorrect case number will route your filing to the wrong docket.' },
+    { label: 'Section 2 — Response Deadline',    text: 'Most civil matters require a response within 20–30 days of service. Check your summons for the exact deadline. Late responses may result in a default judgment.' },
+    { label: 'Section 3 — Relief Requested',     text: 'State clearly what outcome you are requesting. Courts cannot grant relief you do not ask for. Be specific.' },
+  ],
+  parks: [
+    { label: 'Section 1 — Facility Request',     text: 'Specify the exact park location, facility, and date. Conflicts with existing reservations will trigger an alternative offer from parks staff.' },
+    { label: 'Section 2 — Activity Description', text: 'Describe the nature of the event — commercial, nonprofit, or private. Commercial events require additional insurance documentation.' },
+    { label: 'Section 3 — Special Requirements', text: 'Check any boxes for amplified sound, tents, food service, or alcohol. Each triggers a separate clearance process.' },
+  ],
+  education: [
+    { label: 'Section 1 — Residency Verification',text: 'Two forms of residency proof are typically required — a utility bill and a lease or mortgage statement dated within the last 60 days.' },
+    { label: 'Section 2 — Prior School Records',  text: 'If transferring from another district, request records to be sent directly from the prior school. Self-submitted records are not accepted for grade placement.' },
+    { label: 'Section 3 — Special Programs',      text: 'Note any IEP, 504, gifted placement, or language services the student currently receives. These travel with the student and must be disclosed at enrollment.' },
+  ],
+};
+
+const DOMAIN_HINTS = {
+  dmv:       "I can help you with DMV documents and motor vehicle matters in your area.",
+  housing:   "Housing assistance programs vary by location — I'll help you find the right form.",
+  benefits:  "Benefits eligibility rules differ by state and county. I'll guide you to the right application.",
+  courts:    "Court filing requirements depend on your jurisdiction. I'll make sure you have what you need.",
+  parks:     "Parks permits and reservations are managed locally. I can help you navigate the process.",
+  education: "School enrollment rules are set by your district. I'll help you gather the right documentation.",
+};
+
+const STAGE_LABELS = ['Location', 'Domain', 'Document', 'Input', 'Fill', 'Review'];
+
+// ── Core navigation ─────────────────────────────────────
+
+function enterPhase(n) {
+  document.querySelectorAll('.phase').forEach(p => p.classList.remove('is-active'));
+  document.getElementById(`phase-${n}`).classList.add('is-active');
+  currentPhase = n;
+  updateStageTrack(n);
+  updateStagePill(n);
+  const inits = [null, initPhase1, initPhase2, initPhase3, initPhase4, initPhase5, initPhase6];
+  inits[n]?.();
+}
+
+function advance() { if (currentPhase < 6) enterPhase(currentPhase + 1); }
+function back()    { if (currentPhase > 1) enterPhase(currentPhase - 1); }
+function jumpTo(n) { enterPhase(n); }
+
+// ── Stage track + pill ──────────────────────────────────
+
+function updateStageTrack(active) {
+  for (let i = 1; i <= 6; i++) {
+    const el = document.getElementById(`st-${i}`);
+    el.classList.remove('is-active', 'is-done');
+    if (i < active)  el.classList.add('is-done');
+    if (i === active) el.classList.add('is-active');
+  }
+}
+
+function updateStagePill(n) {
+  document.getElementById('stage-pill').textContent = `Stage ${n} — ${STAGE_LABELS[n-1]}`;
+}
+
+// ── Typewriter ───────────────────────────────────────────
+
+function typewrite(el, text, speed = 18) {
+  return new Promise(resolve => {
+    el.textContent = '';
+    let i = 0;
+    function tick() {
+      if (i < text.length) {
+        el.textContent += text[i++];
+        setTimeout(tick, speed);
+      } else {
+        resolve();
+      }
+    }
+    tick();
+  });
+}
+
+// Drives the agent-brief block for a given phase.
+// Shows thinking dots immediately, calls Gemini, then typewriters the result.
+async function agentBrief(phaseNum, role, prompt, fallback) {
+  const thinkingEl = document.getElementById(`brief-p${phaseNum}-thinking`);
+  const textEl     = document.getElementById(`brief-p${phaseNum}-text`);
+  const roleEl     = document.getElementById(`brief-p${phaseNum}-role`);
+
+  if (roleEl) roleEl.textContent = role;
+  if (thinkingEl) thinkingEl.style.display = 'flex';
+  if (textEl)   { textEl.style.display = 'none'; textEl.textContent = ''; }
+
+  state.agentStatus = 'thinking';
+  document.getElementById('status-dot').classList.add('thinking');
+  const t0 = Date.now();
+
+  const text = (await callGemini(prompt)) ?? fallback;
+
+  const elapsed = Date.now() - t0;
+  await new Promise(r => setTimeout(r, Math.max(0, 500 - elapsed)));
+
+  state.agentStatus = 'idle';
+  document.getElementById('status-dot').classList.remove('thinking');
+
+  if (thinkingEl) thinkingEl.style.display = 'none';
+  if (textEl) {
+    textEl.style.display = 'block';
+    await typewrite(textEl, text);
+  }
+}
+
+// ── HTML escape ───────────────────────────────────────────
+
+function esc(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+// ── Breadcrumb helper ────────────────────────────────────
+
+function renderBreadcrumb(containerId) {
+  const el = document.getElementById(containerId);
+  const parts = [];
+  if (state.location) parts.push(state.location);
+  if (state.domain) {
+    const d = DOMAINS.find(x => x.key === state.domain);
+    if (d) parts.push(d.name);
+  }
+  if (state.docType) parts.push(state.docType);
+  el.innerHTML = parts.map((p, i) =>
+    i < parts.length - 1
+      ? `<span>${esc(p)}</span><span class="ug-breadcrumb-sep">›</span>`
+      : `<span>${esc(p)}</span>`
+  ).join('');
+}
+
+// ── Hint zone helpers ─────────────────────────────────────
+
+function showHint(id, html) {
+  const el = document.getElementById(id);
+  el.style.display = 'block';
+  const textEl = el.querySelector('span:first-child') || el;
+  if (el.querySelector('.hint-thinking')) {
+    el.innerHTML = html + `<span class="ug-hint-attr">CivicGuide</span>`;
+  } else {
+    const textNode = el.querySelector('span:not(.ug-hint-attr)');
+    if (textNode) textNode.textContent = html;
+  }
+}
+
+function setHintText(id, text) {
+  const el = document.getElementById(id);
+  el.style.display = 'block';
+  const textNode = document.getElementById(id + '-text');
+  if (textNode) textNode.textContent = text;
+}
+
+// ── Theme toggle ─────────────────────────────────────────
+
+const savedTheme = localStorage.getItem('ug-theme');
+if (savedTheme === 'dark') {
+  document.documentElement.setAttribute('data-theme', 'dark');
+  document.getElementById('theme-toggle').textContent = 'Dark';
+}
+
+document.getElementById('theme-toggle').addEventListener('click', () => {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+  localStorage.setItem('ug-theme', isDark ? 'light' : 'dark');
+  document.getElementById('theme-toggle').textContent = isDark ? 'Light' : 'Dark';
+});
+
+// ────────────────────────────────────────────────────────
+// Phase 1 — Location
+// ────────────────────────────────────────────────────────
+
+function initPhase1() {
+  const input  = document.getElementById('loc-input');
+  const geoBtn = document.getElementById('loc-geo-btn');
+  const btn    = document.getElementById('btn-p1');
+
+  if (state.location) {
+    input.value = state.location;
+    btn.disabled = false;
+    advance();
+    return;
+  }
+
+  agentBrief(1, 'Router',
+    'Greet the user in one sentence and invite them to enter their location to get started.',
+    "Tell me where you are and I'll find the right resources for you."
+  );
+
+  // Enable continue when there's input
+  input.addEventListener('input', () => {
+    btn.disabled = input.value.trim().length < 2;
+  });
+
+  btn.addEventListener('click', () => {
+    const loc = input.value.trim();
+    if (!loc) return;
+    state.location = loc;
+    advance();
+  });
+
+  // Geo simulation
+  geoBtn.addEventListener('click', () => {
+    geoBtn.textContent = '…';
+    geoBtn.disabled = true;
+
+    if (!navigator.geolocation) {
+      geoBtn.textContent = 'Use My Location';
+      geoBtn.disabled = false;
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude, longitude } = pos.coords;
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`,
+            { headers: { 'Accept-Language': 'en' } }
+          );
+          const data = await res.json();
+          const city  = data.address?.city || data.address?.town || data.address?.village || '';
+          const stateStr = data.address?.state || data.address?.country || '';
+          const label = city && stateStr ? `${city}, ${stateStr}` : data.display_name?.split(',').slice(0,2).join(',').trim() || 'Current Location';
+          input.value = label;
+          btn.disabled = label.length < 2;
+        } catch {
+          input.value = 'Current Location';
+          btn.disabled = false;
+        }
+        geoBtn.textContent = 'Use My Location';
+        geoBtn.disabled = false;
+      },
+      () => {
+        geoBtn.textContent = 'Use My Location';
+        geoBtn.disabled = false;
+      }
+    );
+  });
+}
+
+// ────────────────────────────────────────────────────────
+// Phase 2 — Domain
+// ────────────────────────────────────────────────────────
+
+function initPhase2() {
+  renderBreadcrumb('bc-p2');
+
+  agentBrief(2, 'Router',
+    `The user is in ${state.location}. In one sentence, ask them to select the civic area they need help with.`,
+    'Select the area that matches your situation and I\'ll connect you with the right specialist.'
+  );
+
+  const grid    = document.getElementById('domain-grid');
+  const hint    = document.getElementById('hint-p2');
+  const hintTxt = document.getElementById('hint-p2-text');
+
+  grid.innerHTML = '';
+  let hoverTimer = null;
+
+  DOMAINS.forEach(d => {
+    const tile = document.createElement('div');
+    tile.className = 'ug-domain-tile' + (state.domain === d.key ? ' is-selected' : '');
+    tile.dataset.domain = d.key;
+    tile.innerHTML = `<div class="ug-domain-name">${d.name}</div><div class="ug-domain-sub">${d.sub}</div>`;
+
+    tile.addEventListener('mouseenter', () => {
+      hoverTimer = setTimeout(() => {
+        hint.style.display = 'block';
+        hintTxt.textContent = 'Select the area closest to your situation.';
+      }, 600);
+    });
+
+    tile.addEventListener('mouseleave', () => {
+      clearTimeout(hoverTimer);
+    });
+
+    tile.addEventListener('click', () => {
+      grid.querySelectorAll('.ug-domain-tile').forEach(t => t.classList.remove('is-selected'));
+      tile.classList.add('is-selected');
+      state.domain = d.key;
+      grid.style.pointerEvents = 'none';
+
+      agentRespond(
+        `The user selected "${d.name}" as their civic domain. In one sentence, acknowledge the selection and say you'll help narrow it down.`,
+        `Got it — ${d.name}. Let's narrow it down.`,
+        400,
+        async text => {
+          hint.style.display = 'block';
+          await typewrite(hintTxt, text);
+          setTimeout(() => advance(), 500);
+        }
+      );
+    });
+
+    grid.appendChild(tile);
+  });
+}
+
+// ────────────────────────────────────────────────────────
+// Phase 3 — Document Type
+// ────────────────────────────────────────────────────────
+
+function initPhase3() {
+  renderBreadcrumb('bc-p3');
+
+  const domainObj = DOMAINS.find(d => d.key === state.domain);
+  agentBrief(3, 'Domain Expert',
+    `You are the Domain Expert for ${domainObj?.name || state.domain}. In one sentence, tell the user what you can help them with and ask them to select their document type.`,
+    `I'm your ${domainObj?.name || state.domain} specialist. Select the document type that matches your situation.`
+  );
+
+  const sel       = document.getElementById('doc-type-select');
+  const pairWrap  = document.getElementById('choice-pair-wrap');
+  const uploadBtn = document.getElementById('choice-upload');
+  const descBtn   = document.getElementById('choice-describe');
+  const continueBtn = document.getElementById('btn-p3');
+  const hint      = document.getElementById('hint-p3');
+  const hintTxt   = document.getElementById('hint-p3-text');
+
+  // Populate dropdown for domain
+  const options = DOC_TYPES[state.domain] || [];
+  sel.innerHTML = `<option value="">Select document type…</option>` +
+    options.map(o => `<option value="${o}"${state.docType === o ? ' selected' : ''}>${o}</option>`).join('');
+
+  // Restore choice pair if docType already set
+  if (state.docType) {
+    pairWrap.classList.add('is-open');
+  }
+
+  // Restore method selection
+  if (state.method === 'upload') {
+    uploadBtn.classList.add('is-selected');
+    descBtn.classList.remove('is-selected');
+    continueBtn.disabled = false;
+  } else if (state.method === 'describe') {
+    descBtn.classList.add('is-selected');
+    uploadBtn.classList.remove('is-selected');
+    continueBtn.disabled = false;
+  }
+
+  // Dropdown focus fires hint (once)
+  let hintFired = false;
+  sel.addEventListener('focus', () => {
+    if (hintFired) return;
+    hintFired = true;
+    agentRespond(
+      `Explain in one sentence why selecting the specific document type matters for a ${state.domain} case.`,
+      'The document type determines what information we ask for and which agency receives your submission.',
+      300,
+      async text => { hint.style.display = 'block'; await typewrite(hintTxt, text); }
+    );
+  });
+
+  sel.addEventListener('change', () => {
+    const val = sel.value;
+    if (!val) {
+      state.docType = null;
+      pairWrap.classList.remove('is-open');
+      continueBtn.disabled = true;
+      return;
+    }
+    state.docType = val;
+    pairWrap.classList.add('is-open');
+    // Reset method if changing doc type
+    state.method = null;
+    uploadBtn.classList.remove('is-selected');
+    descBtn.classList.remove('is-selected');
+    continueBtn.disabled = true;
+  });
+
+  // Choice selection
+  [uploadBtn, descBtn].forEach(card => {
+    card.addEventListener('click', () => {
+      [uploadBtn, descBtn].forEach(c => c.classList.remove('is-selected'));
+      card.classList.add('is-selected');
+      state.method = card.dataset.method;
+      continueBtn.disabled = false;
+    });
+  });
+
+  continueBtn.addEventListener('click', () => advance());
+}
+
+// ────────────────────────────────────────────────────────
+// Phase 4 — Input
+// ────────────────────────────────────────────────────────
+
+function initPhase4() {
+  renderBreadcrumb('bc-p4');
+
+  const methodLabel = state.method === 'describe' ? 'describe their situation' : 'upload a document';
+  agentBrief(4, 'Document Agent',
+    `The user will ${methodLabel} for a ${state.docType} in the ${state.domain} domain. In one sentence, prompt them to do so.`,
+    state.method === 'describe'
+      ? 'Describe what happened in your own words and I\'ll take it from there.'
+      : 'Drop your document here and I\'ll read it and highlight what matters.'
+  );
+
+  const heading    = document.getElementById('p4-heading');
+  const uploadView = document.getElementById('p4-upload');
+  const descView   = document.getElementById('p4-describe');
+  const continueBtn = document.getElementById('btn-p4');
+  const hintEl     = document.getElementById('hint-p4');
+  const hintTxt    = document.getElementById('hint-p4-text');
+
+  if (state.method === 'describe') {
+    heading.textContent = 'Describe your situation';
+    uploadView.style.display = 'none';
+    descView.style.display = 'block';
+
+    const textarea  = document.getElementById('p4-textarea');
+    const charCount = document.getElementById('char-count');
+    const helpBtn   = document.getElementById('desc-help-btn');
+    const hintDesc  = document.getElementById('hint-desc');
+
+    // Restore saved description
+    if (state.fields.description) {
+      textarea.value = state.fields.description;
+      charCount.textContent = `${textarea.value.length} / 800`;
+      continueBtn.disabled = textarea.value.trim().length < 10;
+    }
+
+    textarea.addEventListener('input', () => {
+      const len = textarea.value.length;
+      charCount.textContent = `${len} / 800`;
+      state.fields.description = textarea.value;
+      continueBtn.disabled = textarea.value.trim().length < 10;
+    });
+
+    helpBtn.addEventListener('click', () => {
+      const open = hintDesc.classList.toggle('is-open');
+      helpBtn.classList.toggle('is-open', open);
+    });
+
+  } else {
+    heading.textContent = 'Upload your document';
+    uploadView.style.display = 'block';
+    descView.style.display = 'none';
+
+    const zone     = document.getElementById('upload-zone');
+    const fileInput = document.getElementById('file-input');
+    const progressWrap = document.getElementById('upload-progress');
+    const fill     = document.getElementById('progress-fill');
+    const label    = document.getElementById('progress-label');
+
+    // Restore confirmed state
+    if (state.fields.uploadedFile) {
+      zone.classList.add('is-confirmed');
+      zone.innerHTML = `<div class="upload-confirmed-row">
+        <span class="ug-badge ug-b-tan">Uploaded</span>
+        <span class="ug-h3" style="font-size:15px">${esc(state.fields.uploadedFile)}</span>
+      </div>`;
+      continueBtn.disabled = false;
+    }
+
+    function simulateUpload(filename) {
+      zone.style.pointerEvents = 'none';
+      progressWrap.style.display = 'block';
+      fill.style.width = '0%';
+      label.textContent = 'Uploading…';
+
+      let pct = 0;
+      const interval = setInterval(() => {
+        pct += Math.random() * 18 + 4;
+        if (pct >= 100) {
+          pct = 100;
+          clearInterval(interval);
+          fill.style.width = '100%';
+          label.textContent = 'Processing…';
+
+          setTimeout(() => {
+            progressWrap.style.display = 'none';
+            zone.classList.add('is-confirmed');
+            zone.innerHTML = `<div class="upload-confirmed-row">
+              <span class="ug-badge ug-b-tan">Uploaded</span>
+              <span class="ug-h3" style="font-size:15px">${esc(filename)}</span>
+            </div>`;
+            state.fields.uploadedFile = filename;
+
+            // Hint fires after upload
+            agentRespond(
+              `The user uploaded "${filename}" for a ${state.docType} in the ${state.domain} domain. In one sentence, acknowledge the upload and say you'll analyze it.`,
+              "I'll analyze this document and highlight what matters for your submission.",
+              400,
+              async text => { hintEl.style.display = 'block'; await typewrite(hintTxt, text); continueBtn.disabled = false; }
+            );
+          }, 400);
+        }
+        fill.style.width = `${Math.min(pct, 100)}%`;
+      }, 80);
+    }
+
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files[0]) simulateUpload(fileInput.files[0].name);
+    });
+
+    zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('is-dragging'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('is-dragging'));
+    zone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      zone.classList.remove('is-dragging');
+      if (e.dataTransfer.files[0]) simulateUpload(e.dataTransfer.files[0].name);
+    });
+  }
+
+  continueBtn.addEventListener('click', () => {
+    continueBtn.disabled = true;
+    const analyzePrompt = state.method === 'describe'
+      ? `The user described their situation for a ${state.docType} in the ${state.domain} domain. They wrote: "${(state.fields.description || '').slice(0, 120)}". In one sentence, say you've read it and you're ready to guide them through the required fields.`
+      : `You've finished analyzing the uploaded document for a ${state.docType} in the ${state.domain} domain. In one sentence, confirm you've read it and know what needs to be filled in.`;
+    agentRespond(analyzePrompt, "I've reviewed everything. Let's fill in the required fields.", 1800, () => advance());
+  });
+}
+
+// ────────────────────────────────────────────────────────
+// Phase 5 — Fill
+// ────────────────────────────────────────────────────────
+
+function initPhase5() {
+  renderBreadcrumb('bc-p5');
+
+  const domain   = state.domain || 'dmv';
+  const annotate = document.getElementById('annotate-block');
+  const fields   = document.getElementById('phase5-fields');
+  const btn      = document.getElementById('btn-p5');
+
+  agentBrief(5, 'Document Agent',
+    `You've analyzed the user's ${state.docType || 'document'} for ${domain}. In one sentence, tell them you've read it and what they need to do next — fill in the required fields.`,
+    `I've read the ${state.method === 'upload' ? 'document' : 'description'}. Here's what you'll need to fill in for your ${state.docType || 'submission'}.`
+  );
+
+  // Build annotations (fallback text stored in data-fallback for Gemini replace)
+  const anns = ANNOTATIONS[domain] || [];
+  annotate.innerHTML = '';
+  anns.forEach((a) => {
+    const row = document.createElement('div');
+    row.className = 'ug-annotate-row';
+    const safeText = a.text.replace(/"/g, '&quot;');
+    row.innerHTML = `
+      <div class="ug-annotate-trigger" onclick="toggleAnnotate(this)">
+        <span class="ug-ann-label">${a.label}</span>
+        <span class="ug-ann-toggle">Explain ▾</span>
+      </div>
+      <div class="ug-annotate-body">
+        <div class="ug-hint" style="display:block; margin:0" data-fallback="${safeText}">
+          ${a.text}
+          <span class="ug-hint-attr">CivicGuide — document annotation</span>
+        </div>
+      </div>`;
+    annotate.appendChild(row);
+  });
+
+  // Build fields
+  const fieldDefs = PHASE5_FIELDS[domain] || [];
+  fields.innerHTML = '';
+  let filledCount = 0;
+
+  fieldDefs.forEach((f, i) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'ug-field-wrap';
+    const hintId  = `field-hint-${i}`;
+    const inputId = `field-input-${i}`;
+    wrap.innerHTML = `
+      <div class="ug-field-label-row">
+        <span class="ug-field-label">${f.label}</span>
+        <span class="ug-field-help" data-hint="${hintId}">?</span>
+      </div>
+      <input class="ug-field-input" id="${inputId}" type="text" placeholder="${f.placeholder}"
+        value="${state.fields[f.name] || ''}">
+      <div class="field-hint" id="${hintId}">
+        ${f.hint}
+        <span class="ug-hint-attr">CivicGuide — ${state.domain} guidance</span>
+      </div>`;
+    fields.appendChild(wrap);
+
+    const input   = wrap.querySelector(`#${inputId}`);
+    const helpBtn = wrap.querySelector('.ug-field-help');
+    const hint    = wrap.querySelector(`#${hintId}`);
+
+    // Count already-filled fields on init
+    if (state.fields[f.name]) filledCount++;
+
+    input.addEventListener('input', () => {
+      state.fields[f.name] = input.value;
+      if (input.value.trim()) {
+        input.classList.add('is-confirmed');
+      } else {
+        input.classList.remove('is-confirmed');
+      }
+      checkAllFilled();
+    });
+
+    if (state.fields[f.name]) {
+      input.classList.add('is-confirmed');
+    }
+
+    helpBtn.addEventListener('click', () => {
+      const willOpen = !hint.classList.contains('is-open');
+      hint.classList.toggle('is-open', willOpen);
+      helpBtn.classList.toggle('is-open', willOpen);
+
+      // First open — call Gemini for field guidance
+      if (willOpen && !hint.dataset.loaded) {
+        hint.dataset.loaded = 'pending';
+        const fallback = f.hint;
+        callGemini(
+          `Explain in 1-2 sentences what "${f.label}" means on a ${state.docType || 'government form'}, for someone unfamiliar with the process.`,
+          120
+        ).then(async text => {
+          if (text) {
+            const attrEl = hint.querySelector('.ug-hint-attr');
+            hint.innerHTML = '';
+            const textSpan = document.createElement('span');
+            hint.appendChild(textSpan);
+            if (attrEl) hint.appendChild(attrEl);
+            await typewrite(textSpan, text);
+            hint.dataset.loaded = 'true';
+          }
+        });
+      }
+    });
+  });
+
+  function checkAllFilled() {
+    const allFilled = fieldDefs.every(f => state.fields[f.name]?.trim());
+    btn.disabled = !allFilled;
+  }
+
+  checkAllFilled();
+  btn.addEventListener('click', () => advance());
+}
+
+async function toggleAnnotate(trigger) {
+  const body   = trigger.nextElementSibling;
+  const toggle = trigger.querySelector('.ug-ann-toggle');
+  const open   = body.classList.toggle('is-open');
+  toggle.textContent = open ? 'Close ▴' : 'Explain ▾';
+
+  // First expand — replace canned text with Gemini response
+  if (open && !body.dataset.loaded) {
+    body.dataset.loaded = 'pending';
+    const label  = trigger.querySelector('.ug-ann-label').textContent;
+    const hintEl = body.querySelector('.ug-hint');
+    const fallback = hintEl?.dataset.fallback || '';
+    const attr   = `<span class="ug-hint-attr">CivicGuide — document annotation</span>`;
+
+    // Show thinking dots while waiting
+    if (hintEl) {
+      hintEl.innerHTML = `<div class="hint-thinking"><div class="dot-pulse"></div><div class="dot-pulse"></div><div class="dot-pulse"></div></div>${attr}`;
+    }
+
+    const text = await callGemini(
+      `Explain "${label}" from a ${state.docType || 'government document'} in 2 plain-language sentences for someone who has never dealt with this before.`,
+      200
+    );
+
+    if (hintEl) {
+      hintEl.innerHTML = `<span></span>${attr}`;
+      await typewrite(hintEl.querySelector('span'), text || fallback);
+      body.dataset.loaded = 'true';
+    }
+  }
+}
+
+// ────────────────────────────────────────────────────────
+// Phase 6 — Review
+// ────────────────────────────────────────────────────────
+
+function initPhase6() {
+  renderBreadcrumb('bc-p6');
+
+  agentBrief(6, 'Security Agent',
+    `You are the Security Agent. The user is about to submit a ${state.docType} for ${state.domain}. In one sentence, ask them to review everything carefully before confirming.`,
+    'Review your information carefully — once confirmed, this will be sent to the relevant agency.'
+  );
+
+  const table   = document.getElementById('review-table');
+  const submitBtn = document.getElementById('btn-submit');
+  const success = document.getElementById('submit-success');
+  const hintTxt = document.getElementById('hint-p6-text');
+
+  // Build review rows
+  const domain = DOMAINS.find(d => d.key === state.domain);
+  const fieldDefs = PHASE5_FIELDS[state.domain] || [];
+
+  const rows = [
+    { label: 'Location', value: state.location, phase: 1 },
+    { label: 'Domain',   value: domain?.name || state.domain, phase: 2 },
+    { label: 'Document', value: state.docType, phase: 3 },
+    { label: 'Method',   value: state.method === 'upload'
+        ? (state.fields.uploadedFile ? `Upload — ${state.fields.uploadedFile}` : 'Upload')
+        : 'Describe',
+      phase: 4 },
+    ...fieldDefs.map(f => ({
+      label: f.label,
+      value: state.fields[f.name] || '—',
+      phase: 5,
+    })),
+  ];
+
+  table.innerHTML = rows.map(r => `
+    <tr>
+      <td>${esc(r.label)}</td>
+      <td>${esc(r.value || '—')} <button class="ug-review-edit" onclick="jumpTo(${r.phase})">Edit</button></td>
+    </tr>`).join('');
+
+  // Reset submit state
+  success.classList.remove('is-visible');
+  submitBtn.textContent = 'Confirm & Submit';
+  submitBtn.classList.remove('is-success');
+  submitBtn.disabled = false;
+
+  submitBtn.addEventListener('click', () => {
+    submitBtn.disabled = true;
+
+    const NEXT_STEPS_FALLBACK = {
+      dmv:       `Your renewal application has been submitted to the DMV. You'll receive a confirmation by mail within 3–5 business days. Your current license remains valid during processing.`,
+      housing:   `Your application is in queue with the housing authority. Response times vary — 30–90 days is typical. Keep your contact information current in case they need additional documentation.`,
+      benefits:  `Your benefits application has been submitted. An eligibility worker will review your case within 10 business days. Watch for a letter or phone call asking for verification documents.`,
+      courts:    `Your filing has been submitted to the court clerk. You should receive a case number and hearing date by mail within 5 business days. Keep a copy of this submission for your records.`,
+      parks:     `Your permit application has been received by the parks department. A coordinator will confirm availability and send a permit agreement within 5 business days.`,
+      education: `Your enrollment application has been submitted to the school district. The registrar's office will contact you within 3–5 business days to confirm placement and request any remaining documents.`,
+    };
+
+    agentRespond(
+      `The user just submitted a ${state.docType} application for ${state.domain} in ${state.location}. Give them 2-3 sentences about what happens next in the process.`,
+      `Done. ${NEXT_STEPS_FALLBACK[state.domain] || 'Your submission has been received and is under review.'}`,
+      400,
+      text => {
+        submitBtn.textContent = 'Submitted';
+        submitBtn.classList.add('is-success');
+        for (let i = 1; i <= 6; i++) {
+          const el = document.getElementById(`st-${i}`);
+          el.classList.remove('is-active');
+          el.classList.add('is-done');
+        }
+        success.classList.add('is-visible');
+        typewrite(hintTxt, text);
+      }
+    );
+  });
+}
+
+// ── Expose globals needed by inline HTML event handlers ──
+// (required because <script type="module"> is scoped)
+
+window.back           = back;
+window.jumpTo         = jumpTo;
+window.toggleAnnotate = toggleAnnotate;
+
+// ── Auth UI ───────────────────────────────────────────────
+
+const authScreen   = document.getElementById('auth-screen');
+const authEmailEl  = document.getElementById('auth-email');
+const authSubmitBtn = document.getElementById('auth-submit-btn');
+const authSent     = document.getElementById('auth-sent');
+
+authSubmitBtn.addEventListener('click', async () => {
+  const email = authEmailEl.value.trim();
+  if (!email) return;
+  authSubmitBtn.disabled = true;
+  authSubmitBtn.textContent = 'Sending…';
+  try {
+    await sendMagicLink(email);
+    authSent.classList.add('is-visible');
+    authSubmitBtn.style.display = 'none';
+    authEmailEl.style.display = 'none';
+  } catch (err) {
+    authSubmitBtn.disabled = false;
+    authSubmitBtn.textContent = 'Send sign-in link';
+    const isRateLimit = err.message?.toLowerCase().includes('rate limit') || err.status === 429;
+    authSent.textContent = isRateLimit
+      ? 'Too many sign-in attempts. Please wait a few minutes and try again.'
+      : `Something went wrong: ${err.message}`;
+    authSent.classList.add('is-visible');
+    console.error('[Auth]', err.message);
+  }
+});
+
+authEmailEl.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') authSubmitBtn.click();
+});
+
+let currentUser = null;
+let userProfile = null;
+let booted = false;
+
+const profileScreen   = document.getElementById('profile-screen');
+const profileNameEl   = document.getElementById('profile-name');
+const profileLocEl    = document.getElementById('profile-location');
+const profileSaveBtn  = document.getElementById('profile-save-btn');
+const profileSkipBtn  = document.getElementById('profile-skip-btn');
+
+profileSaveBtn.addEventListener('click', async () => {
+  const name     = profileNameEl.value.trim();
+  const location = profileLocEl.value.trim();
+  if (!name && !location) return;
+  profileSaveBtn.disabled = true;
+  profileSaveBtn.textContent = 'Saving…';
+  try {
+    if (currentUser) {
+      await updateProfile(currentUser.id, { name, location });
+      userProfile = { ...userProfile, name, location };
+    }
+    if (location) state.location = location;
+  } catch (err) {
+    console.error('[Profile]', err.message);
+  }
+  profileScreen.classList.remove('is-visible');
+  initPhase1();
+});
+
+profileSkipBtn.addEventListener('click', () => {
+  profileScreen.classList.remove('is-visible');
+  initPhase1();
+});
+
+async function bootApp(session) {
+  if (booted) return;
+  booted = true;
+  currentUser = session?.user ?? null;
+  if (currentUser) {
+    await ensureProfile(currentUser.id);
+    userProfile = await getProfile(currentUser.id);
+  }
+  authScreen.classList.add('is-hidden');
+  if (!userProfile?.name && !userProfile?.location) {
+    profileScreen.classList.add('is-visible');
+  } else {
+    if (userProfile?.location) state.location = userProfile.location;
+    initPhase1();
+  }
+}
+
+// ── Boot ─────────────────────────────────────────────────
+
+onAuthChange((event, session) => {
+  console.log('[Auth] event:', event, '| session:', session?.user?.email ?? null);
+  if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session) bootApp(session);
+});
+
+const session = await getSession();
+console.log('[Auth] getSession:', session?.user?.email ?? null);
+if (session) {
+  await bootApp(session);
+} else if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+  console.log('[Auth] Dev bypass — skipping auth on localhost');
+  await bootApp(null);
+}
+
+</script>
+</body>
+</html>

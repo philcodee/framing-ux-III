@@ -9,8 +9,9 @@
  * or a server-side proxy — never expose it in client-side JS.
  */
 
-export const GEMINI_MODEL     = 'gemini-2.5-flash';
+export const GEMINI_MODEL     = 'gemini-2.5-pro';
 export const GEMINI_PROXY_URL = '/.netlify/functions/gemini';
+
 
 export const SYSTEM_PROMPT = `You are CivicGuide, a multi-agent civic assistance system. Your purpose is to reduce administrative burden by helping users navigate government paperwork, forms, and civic processes.
 
