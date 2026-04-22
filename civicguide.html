@@ -820,6 +820,85 @@ textarea.fill-field-input {
   margin-bottom: var(--sp-07);
 }
 
+/* ── Account Panel ─────────────────────────────────────── */
+
+#account-panel {
+  position: fixed; inset: 0;
+  background: var(--cds-background);
+  display: none; align-items: flex-start; justify-content: center;
+  z-index: 997; overflow-y: auto; padding: var(--sp-10) 0 var(--sp-09);
+}
+#account-panel.is-visible { display: flex; }
+
+.account-card { width: 100%; max-width: 520px; padding: 0 var(--sp-06); }
+
+.account-panel-header {
+  display: flex; align-items: baseline; justify-content: space-between;
+  margin-bottom: var(--sp-07);
+}
+.account-panel-title {
+  font-size: 1.75rem; font-weight: 400; line-height: 2.25rem;
+  letter-spacing: 0; color: var(--cds-text-primary);
+}
+
+.account-section { margin-bottom: var(--sp-08); }
+
+.account-section-label {
+  font-size: 0.75rem; font-weight: 600; letter-spacing: 0.32px;
+  text-transform: uppercase; color: var(--cds-text-secondary);
+  padding-bottom: var(--sp-03);
+  border-bottom: 1px solid var(--cds-border-subtle-00);
+  margin-bottom: var(--sp-06);
+}
+
+.acct-save-row { display: flex; align-items: center; gap: var(--sp-05); margin-top: var(--sp-03); }
+.acct-saved-msg {
+  font-size: 0.75rem; letter-spacing: 0.32px;
+  color: var(--cds-support-success); opacity: 0;
+  transition: opacity var(--motion-moderate) var(--motion-standard);
+}
+.acct-saved-msg.is-visible { opacity: 1; }
+
+.saved-form-row {
+  display: flex; align-items: center;
+  padding: var(--sp-04) 0;
+  border-bottom: 1px solid var(--cds-border-subtle-00);
+  gap: var(--sp-05);
+}
+.saved-form-row:first-child { border-top: 1px solid var(--cds-border-subtle-00); }
+.saved-form-info { flex: 1; min-width: 0; }
+.saved-form-label {
+  font-size: 0.875rem; letter-spacing: 0.16px;
+  color: var(--cds-text-primary);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.saved-form-meta {
+  font-size: 0.75rem; letter-spacing: 0.32px;
+  color: var(--cds-text-helper); margin-top: var(--sp-01);
+}
+.saved-form-actions { display: flex; gap: var(--sp-03); flex-shrink: 0; }
+.acct-form-btn {
+  font-family: var(--ff-sans); font-size: 0.75rem; letter-spacing: 0.32px;
+  padding: 0 var(--sp-04); height: 2rem; cursor: pointer;
+  transition: background var(--motion-fast) var(--motion-standard),
+              border-color var(--motion-fast) var(--motion-standard),
+              color var(--motion-fast) var(--motion-standard);
+}
+.acct-form-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.acct-form-btn.continue {
+  background: var(--cds-button-primary); color: var(--cds-text-on-color); border: none;
+}
+.acct-form-btn.continue:hover:not(:disabled) { background: var(--cds-button-primary-hover); }
+.acct-form-btn.delete {
+  background: transparent; border: 1px solid var(--cds-border-subtle-01);
+  color: var(--cds-text-secondary);
+}
+.acct-form-btn.delete:hover:not(:disabled) { border-color: var(--cds-support-error); color: var(--cds-support-error); }
+.acct-forms-empty {
+  font-size: 0.875rem; letter-spacing: 0.16px;
+  color: var(--cds-text-secondary); padding: var(--sp-05) 0;
+}
+
 /* ── Mobile (Carbon md breakpoint: 672px) ──────────────── */
 
 @media (max-width: 672px) {
@@ -881,6 +960,42 @@ textarea.fill-field-input {
   </div>
 </div>
 
+<!-- ── Account Panel ────────────────────────────────────── -->
+
+<div id="account-panel">
+  <div class="account-card">
+    <div class="account-panel-header">
+      <div class="account-panel-title">Your account</div>
+      <button class="ug-back-btn" id="account-close-btn" style="min-width:0; padding:0 var(--sp-05);">Close</button>
+    </div>
+
+    <div class="account-section">
+      <div class="account-section-label">Profile</div>
+      <div class="profile-field">
+        <label class="ug-lbl" for="acct-name">Your name</label>
+        <input id="acct-name" type="text" placeholder="First name or full name" autocomplete="name">
+      </div>
+      <div class="profile-field">
+        <label class="ug-lbl" for="acct-location">Your city or ZIP code</label>
+        <input id="acct-location" type="text" placeholder="e.g. Portland, OR or 97201" autocomplete="address-level2">
+      </div>
+      <div class="acct-save-row">
+        <button class="ug-confirm-btn" id="acct-save-btn" style="min-width:0; padding:0 var(--sp-07) 0 var(--sp-05);">Save profile</button>
+        <span class="acct-saved-msg" id="acct-saved-msg">Saved</span>
+      </div>
+    </div>
+
+    <div class="account-section">
+      <div class="account-section-label">Saved forms</div>
+      <div id="acct-forms-list"></div>
+    </div>
+
+    <div style="padding-top:var(--sp-06); border-top:1px solid var(--cds-border-subtle-00);">
+      <button class="ug-back-btn" id="sign-out-btn" style="min-width:0; padding:0 var(--sp-05);">Sign out</button>
+    </div>
+  </div>
+</div>
+
 <!-- ── Header ───────────────────────────────────────────── -->
 
 <header class="ug-broadside">
@@ -889,6 +1004,7 @@ textarea.fill-field-input {
     <span class="stage-pill" id="stage-pill">Stage 1 — Upload</span>
     <div class="status-dot" id="status-dot"></div>
     <button class="theme-toggle" id="theme-toggle">Light</button>
+    <button class="theme-toggle" id="account-btn" style="display:none">Account</button>
   </div>
 </header>
 
@@ -1030,7 +1146,7 @@ textarea.fill-field-input {
 
 import { GEMINI_PROXY_URL, GEMINI_MODEL, SYSTEM_PROMPT } from './config.js';
 import { supabase } from './supabase.js';
-import { getSession, sendMagicLink, onAuthChange, ensureProfile, getProfile, updateProfile } from './auth.js';
+import { getSession, sendMagicLink, onAuthChange, ensureProfile, getProfile, updateProfile, signOut } from './auth.js';
 
 // ── Constants ────────────────────────────────────────────
 
@@ -1747,6 +1863,111 @@ profileSkipBtn.addEventListener('click', () => {
   enterPhase(1);
 });
 
+// ── Account Panel ─────────────────────────────────────────
+
+async function getAllSavedForms(userId) {
+  const { data, error } = await supabase
+    .from('saved_forms').select('*').eq('user_id', userId)
+    .order('updated_at', { ascending: false });
+  if (error) { console.error('[SavedForms] list:', error.message); return []; }
+  return data ?? [];
+}
+
+const accountPanel    = document.getElementById('account-panel');
+const accountCloseBtn = document.getElementById('account-close-btn');
+const accountBtn      = document.getElementById('account-btn');
+const acctNameEl      = document.getElementById('acct-name');
+const acctLocEl       = document.getElementById('acct-location');
+const acctSaveBtn     = document.getElementById('acct-save-btn');
+const acctSavedMsg    = document.getElementById('acct-saved-msg');
+const acctFormsList   = document.getElementById('acct-forms-list');
+const signOutBtn      = document.getElementById('sign-out-btn');
+
+function formatSavedDate(iso) {
+  return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function renderSavedForms(forms) {
+  if (!forms.length) {
+    acctFormsList.innerHTML = '<p class="acct-forms-empty">No saved forms yet.</p>';
+    return;
+  }
+  acctFormsList.innerHTML = '';
+  forms.forEach(form => {
+    const row = document.createElement('div');
+    row.className = 'saved-form-row';
+    const label = form.doc_type || (form.domain ? `${form.domain} form` : 'Untitled form');
+    const stage = form.stage === 'review' ? 'Review' : 'Fill';
+    const date  = formatSavedDate(form.updated_at);
+    row.innerHTML = `
+      <div class="saved-form-info">
+        <div class="saved-form-label">${label}</div>
+        <div class="saved-form-meta">Last saved ${date} &middot; ${stage}</div>
+      </div>
+      <div class="saved-form-actions">
+        <button class="acct-form-btn continue">Continue</button>
+        <button class="acct-form-btn delete">Delete</button>
+      </div>`;
+    row.querySelector('.continue').addEventListener('click', () => {
+      accountPanel.classList.remove('is-visible');
+      restoreFormState(form);
+    });
+    row.querySelector('.delete').addEventListener('click', async (e) => {
+      const btn = e.currentTarget;
+      btn.disabled = true;
+      btn.textContent = '…';
+      const { error } = await supabase.from('saved_forms').delete().eq('id', form.id);
+      if (error) { btn.disabled = false; btn.textContent = 'Delete'; return; }
+      if (savedFormId === form.id) savedFormId = null;
+      row.remove();
+      if (!acctFormsList.querySelector('.saved-form-row')) {
+        acctFormsList.innerHTML = '<p class="acct-forms-empty">No saved forms yet.</p>';
+      }
+    });
+    acctFormsList.appendChild(row);
+  });
+}
+
+async function openAccountPanel() {
+  if (!currentUser) return;
+  acctNameEl.value = userProfile?.name ?? '';
+  acctLocEl.value  = userProfile?.location ?? '';
+  acctSavedMsg.classList.remove('is-visible');
+  acctFormsList.innerHTML = '<p class="acct-forms-empty" style="color:var(--cds-text-helper)">Loading…</p>';
+  accountPanel.classList.add('is-visible');
+  const forms = await getAllSavedForms(currentUser.id);
+  renderSavedForms(forms);
+}
+
+accountBtn.addEventListener('click', openAccountPanel);
+accountCloseBtn.addEventListener('click', () => accountPanel.classList.remove('is-visible'));
+
+acctSaveBtn.addEventListener('click', async () => {
+  const name     = acctNameEl.value.trim();
+  const location = acctLocEl.value.trim();
+  acctSaveBtn.disabled = true;
+  acctSaveBtn.textContent = 'Saving…';
+  try {
+    await updateProfile(currentUser.id, { name, location });
+    userProfile = { ...userProfile, name, location };
+    if (location) state.location = location;
+    acctSavedMsg.classList.add('is-visible');
+    setTimeout(() => acctSavedMsg.classList.remove('is-visible'), 2500);
+    if (name) accountBtn.textContent = name.split(' ')[0];
+  } catch (err) {
+    console.error('[Account] save profile:', err.message);
+  }
+  acctSaveBtn.disabled = false;
+  acctSaveBtn.textContent = 'Save profile';
+});
+
+signOutBtn.addEventListener('click', async () => {
+  signOutBtn.disabled = true;
+  signOutBtn.textContent = 'Signing out…';
+  await signOut();
+  location.reload();
+});
+
 // ── Boot ─────────────────────────────────────────────────
 
 async function bootApp(session) {
@@ -1758,6 +1979,10 @@ async function bootApp(session) {
     userProfile = await getProfile(currentUser.id);
   }
   authScreen.classList.add('is-hidden');
+  if (currentUser) {
+    accountBtn.style.display = '';
+    if (userProfile?.name) accountBtn.textContent = userProfile.name.split(' ')[0];
+  }
   if (userProfile?.location) state.location = userProfile.location;
   if (currentUser) {
     const saved = await checkSavedForm(currentUser.id);
