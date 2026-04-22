@@ -1311,7 +1311,7 @@ async function uploadFileToGemini(fileData, mimeType) {
   return json.fileUri ?? null;
 }
 
-async function callGemini({ prompt, systemInstruction, fileUri, fileMime, fileData, maxTokens = 1024 }) {
+async function callGemini({ prompt, systemInstruction, fileUri, fileMime, fileData, maxTokens = 1024, model = GEMINI_MODEL }) {
   const parts = [];
   if (fileUri && fileMime) { console.log('[Gemini] using file URI'); parts.push({ file_data: { mime_type: fileMime, file_uri: fileUri } }); }
   else if (fileData && fileMime) { console.warn('[Gemini] falling back to inline_data'); parts.push({ inline_data: { mime_type: fileMime, data: fileData } }); }
@@ -1323,7 +1323,7 @@ async function callGemini({ prompt, systemInstruction, fileUri, fileMime, fileDa
     generationConfig: { maxOutputTokens: maxTokens, temperature: 0.2 },
   };
 
-  const url = `${GEMINI_PROXY_URL}?model=${encodeURIComponent(GEMINI_MODEL)}`;
+  const url = `${GEMINI_PROXY_URL}?model=${encodeURIComponent(model)}`;
   try {
     const res = await fetch(url, {
       method: 'POST',
@@ -1445,6 +1445,43 @@ function initPhase1() {
   if (state.file) showFile(state.file);
 }
 
+// ── AcroForm extraction (PDF.js-free, pdf-lib CDN) ───────
+
+async function extractAcroFields(file) {
+  if (file.type !== 'application/pdf') return null;
+  try {
+    const pdfjs = await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.mjs');
+    pdfjs.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.mjs';
+    const buffer = await file.arrayBuffer();
+    const pdf    = await pdfjs.getDocument({ data: buffer }).promise;
+
+    const seen   = new Set();
+    const fields = [];
+
+    for (let p = 1; p <= pdf.numPages; p++) {
+      const page        = await pdf.getPage(p);
+      const annotations = await page.getAnnotations();
+      for (const annot of annotations) {
+        if (annot.subtype !== 'Widget' || !annot.fieldName || seen.has(annot.fieldName)) continue;
+        seen.add(annot.fieldName);
+        const id       = annot.fieldName;
+        const rawLabel = annot.alternativeText || id.split('.').pop().replace(/\[\d+\]$/, '');
+        const label    = rawLabel.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/[_.\-]/g, ' ').trim() || id;
+        const type     = annot.fieldType === 'Sig'                          ? 'signature'
+                       : (annot.checkBox || annot.radioButton)              ? 'checkbox'
+                       : 'text';
+        const sensitive = /ssn|social.?sec|password|pin\b|account.?num/i.test(id);
+        const value     = typeof annot.fieldValue === 'string' ? annot.fieldValue : '';
+        fields.push({ id, label, value, type, sensitive });
+      }
+    }
+    return fields.length ? fields : null;
+  } catch (err) {
+    console.warn('[AcroForms] extraction failed:', err.message);
+    return null;
+  }
+}
+
 // ── Phase 2 — Scan ───────────────────────────────────────
 
 async function initPhase2() {
@@ -1473,6 +1510,48 @@ async function initPhase2() {
   if (currentUser && state.fileUri) saveNoteEl.style.display = 'block';
 
   setStatus('thinking');
+
+  // Try AcroForm extraction before hitting the AI
+  if (state.file?.type === 'application/pdf' && !state.fileUri) {
+    const acroFields = await extractAcroFields(state.file);
+    if (acroFields?.length) {
+      state.fields = acroFields;
+      state.values = {};
+      acroFields.forEach(f => { state.values[f.id] = f.value || ''; });
+
+      // Text-only call to identify the form and pre-fill from profile
+      const fieldList = acroFields.map(f => f.id).join(', ');
+      const profileHint = (userProfile?.name || userProfile?.location)
+        ? `User profile: ${[userProfile.name && `name="${userProfile.name}"`, userProfile.location && `location="${userProfile.location}"`].filter(Boolean).join(', ')}.`
+        : '';
+      const { text: raw } = await callGemini({
+        prompt: `These AcroForm field IDs were extracted from a government PDF: ${fieldList}.\n${profileHint}\nReturn JSON only:\n{"domain":"<one of: ${DOMAINS.join('|')}>","docType":"<short form name>","summary":"<one sentence>","prefill":{"<fieldId>":"<value>"}}\nOnly include prefill entries where the profile data clearly matches the field. Leave sensitive fields (SSN, financial) out of prefill.`,
+        maxTokens: 512,
+        model: 'gemini-2.5-flash-lite',
+      });
+
+      const meta = parseJSON(raw);
+      state.domain      = meta?.domain || 'Other';
+      state.docType     = meta?.docType || state.file.name.replace(/\.pdf$/i, '');
+      state.scanSummary = meta?.summary || `Fillable PDF — ${acroFields.length} fields detected.`;
+      if (meta?.prefill) {
+        Object.entries(meta.prefill).forEach(([id, val]) => {
+          if (id in state.values && !state.values[id]) state.values[id] = val;
+        });
+      }
+
+      setStatus('ready');
+      thinkingEl.style.display = 'none';
+      briefText.textContent = `Found ${acroFields.length} form fields. Confirm the details below and we'll walk through it together.`;
+      briefText.style.display = 'block';
+      summaryEl.textContent = state.scanSummary;
+      domainSelect.value = DOMAINS.includes(state.domain) ? state.domain : 'Other';
+      docTypeInput.value = state.docType;
+      confirmBlock.style.display = 'block';
+      continueBtn.addEventListener('click', confirmScan);
+      return;
+    }
+  }
 
   if (!state.fileUri) {
     try {

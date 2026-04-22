@@ -41,6 +41,7 @@ if (!API_KEY) {
 
 const PORT          = process.env.PORT ?? 3000;
 const GEMINI_HOST   = 'generativelanguage.googleapis.com';
+const GEMINI_MODEL  = process.env.GEMINI_MODEL ?? 'gemini-2.5-flash';
 
 // ── MIME types ────────────────────────────────────────────
 
@@ -107,7 +108,7 @@ const server = http.createServer((req, res) => {
       }
 
       // ── Generate content ─────────────────────────────
-      const model      = url.searchParams.get('model') || 'gemini-2.5-flash';
+      const model      = url.searchParams.get('model') || GEMINI_MODEL;
       const geminiPath = `/v1beta/models/${model}:generateContent`;
       const options = {
         hostname: GEMINI_HOST,
