@@ -9,7 +9,7 @@
  * or a server-side proxy — never expose it in client-side JS.
  */
 
-export const GEMINI_MODEL     = 'gemini-2.5-flash';
+export const GEMINI_MODEL     = 'gemini-2.0-flash';
 export const GEMINI_PROXY_URL = '/.netlify/functions/gemini';
 
 export const SUPABASE_URL      = 'https://fkvdoqxjdiopopedhswd.supabase.co';

@@ -35,6 +35,7 @@ export const handler = async (event) => {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body:    event.body,
+      signal:  AbortSignal.timeout(22000),
     });
 
     const text = await response.text();
@@ -44,10 +45,11 @@ export const handler = async (event) => {
       body:       text,
     };
   } catch (err) {
+    const isTimeout = err.name === 'TimeoutError' || err.name === 'AbortError';
     return {
-      statusCode: 502,
+      statusCode: isTimeout ? 503 : 502,
       headers:    { 'Content-Type': 'application/json' },
-      body:       JSON.stringify({ error: err.message }),
+      body:       JSON.stringify({ error: isTimeout ? 'Gemini API timed out' : err.message }),
     };
   }
 };
