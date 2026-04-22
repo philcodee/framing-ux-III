@@ -1,5 +1,9 @@
 [functions]
   directory = "netlify/functions"
+  node_bundler = "esbuild"
+
+[functions."gemini"]
+  timeout = 30
 
 [[redirects]]
   from = "/"
