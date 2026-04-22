@@ -1292,23 +1292,33 @@ async function callGemini({ prompt, systemInstruction, fileData, fileMime, maxTo
     generationConfig: { maxOutputTokens: maxTokens, temperature: 0.2 },
   };
 
-  const url = `${GEMINI_PROXY_URL}?model=${encodeURIComponent(GEMINI_MODEL)}`;
-  const delays = [0, 2000, 4000, 8000];
-  for (let attempt = 0; attempt < delays.length; attempt++) {
-    if (delays[attempt] > 0) await new Promise(r => setTimeout(r, delays[attempt]));
-    try {
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-      if (res.status === 503) { console.warn(`[Gemini] 503, retrying in ${delays[attempt + 1] || 0}ms…`); continue; }
-      if (!res.ok) { console.error('[Gemini]', res.status, await res.text()); return null; }
-      const data = await res.json();
-      return data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || null;
-    } catch (err) {
-      console.error('[Gemini] fetch error:', err.message);
+  const modelsToTry = [GEMINI_MODEL, 'gemini-2.0-flash'];
+  for (const model of modelsToTry) {
+    const url = `${GEMINI_PROXY_URL}?model=${encodeURIComponent(model)}`;
+    const delays = [0, 2000, 4000];
+    let allOverloaded = true;
+    for (let attempt = 0; attempt < delays.length; attempt++) {
+      if (delays[attempt] > 0) await new Promise(r => setTimeout(r, delays[attempt]));
+      try {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        if (res.status === 503) { console.warn(`[Gemini] ${model} 503 (attempt ${attempt + 1})`); continue; }
+        allOverloaded = false;
+        if (!res.ok) { console.error('[Gemini]', model, res.status, await res.text()); return null; }
+        const data = await res.json();
+        if (model !== GEMINI_MODEL) console.info(`[Gemini] used fallback model: ${model}`);
+        return data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || null;
+      } catch (err) {
+        console.error('[Gemini] fetch error:', err.message);
+        allOverloaded = false;
+        return null;
+      }
     }
+    if (!allOverloaded) return null;
+    console.warn(`[Gemini] ${model} overloaded, trying fallback model…`);
   }
   return null;
 }
