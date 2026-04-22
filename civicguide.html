@@ -1292,35 +1292,26 @@ async function callGemini({ prompt, systemInstruction, fileData, fileMime, maxTo
     generationConfig: { maxOutputTokens: maxTokens, temperature: 0.2 },
   };
 
-  const modelsToTry = [GEMINI_MODEL, 'gemini-2.5-flash', 'gemini-1.5-pro'];
-  for (const model of modelsToTry) {
-    const url = `${GEMINI_PROXY_URL}?model=${encodeURIComponent(model)}`;
-    const delays = [0, 2000, 4000];
-    let allOverloaded = true;
-    for (let attempt = 0; attempt < delays.length; attempt++) {
-      if (delays[attempt] > 0) await new Promise(r => setTimeout(r, delays[attempt]));
-      try {
-        const res = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-        });
-        if (res.status === 503) { console.warn(`[Gemini] ${model} 503 (attempt ${attempt + 1})`); continue; }
-        allOverloaded = false;
-        if (!res.ok) { console.error('[Gemini]', model, res.status, await res.text()); return null; }
-        const data = await res.json();
-        if (model !== GEMINI_MODEL) console.info(`[Gemini] used fallback model: ${model}`);
-        return data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || null;
-      } catch (err) {
-        console.error('[Gemini] fetch error:', err.message);
-        allOverloaded = false;
-        return null;
-      }
+  const url = `${GEMINI_PROXY_URL}?model=${encodeURIComponent(GEMINI_MODEL)}`;
+  const delays = [0, 3000, 6000];
+  for (let attempt = 0; attempt < delays.length; attempt++) {
+    if (delays[attempt] > 0) await new Promise(r => setTimeout(r, delays[attempt]));
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (res.status === 503) { console.warn(`[Gemini] 503 (attempt ${attempt + 1})`); continue; }
+      if (!res.ok) { console.error('[Gemini]', res.status, await res.text()); return { text: null, overloaded: false }; }
+      const data = await res.json();
+      return { text: data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || null, overloaded: false };
+    } catch (err) {
+      console.error('[Gemini] fetch error:', err.message);
+      return { text: null, overloaded: false };
     }
-    if (!allOverloaded) return null;
-    console.warn(`[Gemini] ${model} overloaded, trying fallback model…`);
   }
-  return null;
+  return { text: null, overloaded: true };
 }
 
 function parseJSON(text) {
@@ -1465,7 +1456,7 @@ async function initPhase2() {
     return;
   }
 
-  const raw = await callGemini({
+  const { text: raw, overloaded } = await callGemini({
     prompt: 'Analyze this civic document and return the JSON as instructed.',
     systemInstruction: buildScanInstruction(userProfile),
     fileData: state.fileData,
@@ -1474,11 +1465,29 @@ async function initPhase2() {
   });
 
   setStatus('ready');
+  thinkingEl.style.display = 'none';
+
+  if (overloaded) {
+    briefText.textContent = 'The AI service is busy right now. Wait a moment and try again.';
+    briefText.style.display = 'block';
+    const retryBtn = document.createElement('button');
+    retryBtn.className = 'ug-back-btn';
+    retryBtn.textContent = 'Try again';
+    retryBtn.style.marginTop = 'var(--sp-05)';
+    retryBtn.addEventListener('click', () => {
+      retryBtn.remove();
+      briefText.style.display = 'none';
+      thinkingEl.style.display = 'flex';
+      setStatus('thinking');
+      initPhase2();
+    });
+    briefText.insertAdjacentElement('afterend', retryBtn);
+    return;
+  }
 
   const result = parseJSON(raw);
 
   if (!result || !result.fields) {
-    thinkingEl.style.display = 'none';
     briefText.textContent = 'Unable to read this document. Please go back and try a clearer scan or a different file.';
     briefText.style.display = 'block';
     return;
@@ -1490,7 +1499,6 @@ async function initPhase2() {
   state.fields      = result.fields;
   result.fields.forEach(f => { if (!(f.id in state.values)) state.values[f.id] = f.value || ''; });
 
-  thinkingEl.style.display = 'none';
   briefText.textContent = `I've read this document. Confirm the details below and we'll walk through it together.`;
   briefText.style.display = 'block';
 
