@@ -894,6 +894,12 @@ textarea.fill-field-input {
   color: var(--cds-text-secondary);
 }
 .acct-form-btn.delete:hover:not(:disabled) { border-color: var(--cds-support-error); color: var(--cds-support-error); }
+.scan-save-note {
+  font-size: 0.75rem; letter-spacing: 0.32px; line-height: 1.25rem;
+  color: var(--cds-support-success);
+  margin-top: var(--sp-05);
+}
+
 .acct-forms-empty {
   font-size: 0.875rem; letter-spacing: 0.16px;
   color: var(--cds-text-secondary); padding: var(--sp-05) 0;
@@ -1075,6 +1081,8 @@ textarea.fill-field-input {
       </div>
     </div>
 
+    <p class="scan-save-note" id="scan-save-note" style="display:none">Progress saved — you can close this and come back later.</p>
+
     <div class="scan-confirm-block" id="scan-confirm-block" style="display:none">
       <div class="scan-summary" id="scan-summary"></div>
 
@@ -1183,14 +1191,16 @@ Mark signature fields with "type": "signature". Keep the field list concise — 
 // ── State ────────────────────────────────────────────────
 
 const state = {
-  file:      null,
-  fileData:  null,
-  fileMime:  null,
-  location:  null,
-  domain:    null,
-  docType:   null,
-  fields:    [],
-  values:    {},
+  file:        null,
+  fileData:    null,
+  fileMime:    null,
+  fileUri:     null,
+  scanSummary: null,
+  location:    null,
+  domain:      null,
+  docType:     null,
+  fields:      [],
+  values:      {},
 };
 
 let currentPhase = 1;
@@ -1210,6 +1220,8 @@ async function saveFormState(stage) {
       values: state.values,
       fillGroupIndex,
       scanSummary: state.scanSummary,
+      fileUri:  state.fileUri  || null,
+      fileMime: state.fileMime || null,
     },
     updated_at: new Date().toISOString(),
   };
@@ -1246,16 +1258,22 @@ function restoreFormState(saved) {
   state.scanSummary = saved.form_state.scanSummary;
   state.fields      = saved.form_state.fields ?? [];
   state.values      = saved.form_state.values ?? {};
+  state.fileUri     = saved.form_state.fileUri  ?? null;
+  state.fileMime    = saved.form_state.fileMime ?? null;
   fillGroupIndex    = saved.form_state.fillGroupIndex ?? 0;
-  enterPhase(saved.stage === 'review' ? 4 : 3);
+  if (saved.stage === 'scan')   enterPhase(2);
+  else if (saved.stage === 'review') enterPhase(4);
+  else enterPhase(3);
 }
 
 function showRestoreOffer(saved) {
   savedFormId = saved.id;
   const restoreScreen = document.getElementById('restore-screen');
   const label = saved.doc_type || (saved.domain ? saved.domain + ' form' : 'form');
-  document.getElementById('restore-sub').textContent =
-    `You have an unfinished ${label}. Pick up where you left off?`;
+  const sub = saved.stage === 'scan'
+    ? 'Your document was uploaded but not yet scanned. Ready to try again?'
+    : `You have an unfinished ${label}. Pick up where you left off?`;
+  document.getElementById('restore-sub').textContent = sub;
 
   document.getElementById('restore-yes-btn').addEventListener('click', () => {
     restoreScreen.classList.remove('is-visible');
@@ -1281,9 +1299,22 @@ function proceedAfterAuth() {
 
 // ── Gemini ───────────────────────────────────────────────
 
-async function callGemini({ prompt, systemInstruction, fileData, fileMime, maxTokens = 1024 }) {
+async function uploadFileToGemini(fileData, mimeType) {
+  const res = await fetch(`${GEMINI_PROXY_URL}?action=upload`, {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ mimeType, data: fileData }),
+  });
+  if (!res.ok) { console.error('[Gemini] upload failed', res.status, await res.text()); return null; }
+  const json = await res.json();
+  console.log('[Gemini] upload ok, fileUri:', json.fileUri);
+  return json.fileUri ?? null;
+}
+
+async function callGemini({ prompt, systemInstruction, fileUri, fileMime, fileData, maxTokens = 1024 }) {
   const parts = [];
-  if (fileData && fileMime) parts.push({ inline_data: { mime_type: fileMime, data: fileData } });
+  if (fileUri && fileMime) { console.log('[Gemini] using file URI'); parts.push({ file_data: { mime_type: fileMime, file_uri: fileUri } }); }
+  else if (fileData && fileMime) { console.warn('[Gemini] falling back to inline_data'); parts.push({ inline_data: { mime_type: fileMime, data: fileData } }); }
   parts.push({ text: prompt });
 
   const body = {
@@ -1293,25 +1324,20 @@ async function callGemini({ prompt, systemInstruction, fileData, fileMime, maxTo
   };
 
   const url = `${GEMINI_PROXY_URL}?model=${encodeURIComponent(GEMINI_MODEL)}`;
-  const delays = [0, 3000, 6000];
-  for (let attempt = 0; attempt < delays.length; attempt++) {
-    if (delays[attempt] > 0) await new Promise(r => setTimeout(r, delays[attempt]));
-    try {
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-      if (res.status === 503) { console.warn(`[Gemini] 503 (attempt ${attempt + 1})`); continue; }
-      if (!res.ok) { console.error('[Gemini]', res.status, await res.text()); return { text: null, overloaded: false }; }
-      const data = await res.json();
-      return { text: data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || null, overloaded: false };
-    } catch (err) {
-      console.error('[Gemini] fetch error:', err.message);
-      return { text: null, overloaded: false };
-    }
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (res.status === 503) { console.warn('[Gemini] 503', await res.text()); return { text: null, overloaded: true }; }
+    if (!res.ok) { console.error('[Gemini]', res.status, await res.text()); return { text: null, overloaded: false }; }
+    const data = await res.json();
+    return { text: data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || null, overloaded: false };
+  } catch (err) {
+    console.error('[Gemini] fetch error:', err.message);
+    return { text: null, overloaded: false };
   }
-  return { text: null, overloaded: true };
 }
 
 function parseJSON(text) {
@@ -1429,6 +1455,7 @@ async function initPhase2() {
   const domainSelect  = document.getElementById('scan-domain');
   const docTypeInput  = document.getElementById('scan-doctype');
   const continueBtn   = document.getElementById('btn-p2');
+  const saveNoteEl    = document.getElementById('scan-save-note');
 
   // If already scanned, just restore
   if (state.fields.length > 0) {
@@ -1443,32 +1470,60 @@ async function initPhase2() {
     return;
   }
 
+  if (currentUser && state.fileUri) saveNoteEl.style.display = 'block';
+
   setStatus('thinking');
 
-  try {
-    state.fileData = await fileToBase64(state.file);
-    state.fileMime = state.file.type || 'application/octet-stream';
-  } catch {
-    briefText.textContent = 'Could not read the file. Please go back and try again.';
-    thinkingEl.style.display = 'none';
-    briefText.style.display = 'block';
-    setStatus('');
-    return;
+  if (!state.fileUri) {
+    try {
+      state.fileData = await fileToBase64(state.file);
+      state.fileMime = state.file.type || 'application/octet-stream';
+    } catch {
+      briefText.textContent = 'Could not read the file. Please go back and try again.';
+      thinkingEl.style.display = 'none';
+      briefText.style.display = 'block';
+      setStatus('');
+      return;
+    }
+    state.fileUri = await uploadFileToGemini(state.fileData, state.fileMime);
+    await saveFormState('scan');
+    if (currentUser) saveNoteEl.style.display = 'block';
   }
 
-  const { text: raw, overloaded } = await callGemini({
+  const geminiArgs = {
     prompt: 'Analyze this civic document and return the JSON as instructed.',
     systemInstruction: buildScanInstruction(userProfile),
-    fileData: state.fileData,
+    fileUri: state.fileUri,
     fileMime: state.fileMime,
+    fileData: state.fileUri ? null : state.fileData,
     maxTokens: 16384,
-  });
+  };
+
+  const retryDelays = [0, 8, 20, 40];
+  let raw = null;
+
+  for (let attempt = 0; attempt < retryDelays.length; attempt++) {
+    const wait = retryDelays[attempt];
+    if (wait > 0) {
+      thinkingEl.style.display = 'none';
+      briefText.style.display = 'block';
+      for (let t = wait; t > 0; t--) {
+        briefText.textContent = `AI service is busy — retrying in ${t}s…`;
+        await new Promise(r => setTimeout(r, 1000));
+      }
+      thinkingEl.style.display = 'flex';
+      briefText.style.display = 'none';
+    }
+    const result = await callGemini(geminiArgs);
+    if (!result.overloaded) { raw = result.text; break; }
+    console.warn(`[Gemini] overloaded, attempt ${attempt + 1}`);
+  }
 
   setStatus('ready');
   thinkingEl.style.display = 'none';
 
-  if (overloaded) {
-    briefText.textContent = 'The AI service is busy right now. Wait a moment and try again.';
+  if (raw === null) {
+    briefText.textContent = 'The AI service is overloaded. Try again when you\'re ready.';
     briefText.style.display = 'block';
     const retryBtn = document.createElement('button');
     retryBtn.className = 'ug-back-btn';

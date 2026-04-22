@@ -62,29 +62,67 @@ const server = http.createServer((req, res) => {
 
   // ── Gemini proxy: POST /.netlify/functions/gemini ────
   if (req.method === 'POST' && url.pathname === '/.netlify/functions/gemini') {
-    const model      = url.searchParams.get('model') || 'gemini-2.5-flash';
-    const geminiPath = `/v1beta/models/${model}:generateContent`;
+    const action = url.searchParams.get('action');
 
-    let body = '';
-    req.on('data', chunk => { body += chunk; });
+    let body = Buffer.alloc(0);
+    req.on('data', chunk => { body = Buffer.concat([body, Buffer.from(chunk)]); });
     req.on('end', () => {
+
+      // ── File upload ──────────────────────────────────
+      if (action === 'upload') {
+        const { mimeType, data: base64Data } = JSON.parse(body.toString());
+        const fileBytes = Buffer.from(base64Data, 'base64');
+        const boundary  = 'gc_boundary';
+        const metadata  = JSON.stringify({ file: { mimeType } });
+        const multipart = Buffer.concat([
+          Buffer.from(`--${boundary}\r\nContent-Type: application/json; charset=utf-8\r\n\r\n${metadata}\r\n--${boundary}\r\nContent-Type: ${mimeType}\r\n\r\n`),
+          fileBytes,
+          Buffer.from(`\r\n--${boundary}--`),
+        ]);
+        const options = {
+          hostname: GEMINI_HOST,
+          path:     `/upload/v1beta/files?uploadType=multipart&key=${API_KEY}`,
+          method:   'POST',
+          headers:  {
+            'Content-Type':   `multipart/related; boundary=${boundary}`,
+            'Content-Length': multipart.length,
+          },
+        };
+        const upstream = https.request(options, upRes => {
+          let data = '';
+          upRes.on('data', c => { data += c; });
+          upRes.on('end', () => {
+            const json = JSON.parse(data);
+            res.writeHead(upRes.statusCode, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ fileUri: json.file?.uri, mimeType: json.file?.mimeType }));
+          });
+        });
+        upstream.on('error', err => {
+          res.writeHead(502, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: err.message }));
+        });
+        upstream.write(multipart);
+        upstream.end();
+        return;
+      }
+
+      // ── Generate content ─────────────────────────────
+      const model      = url.searchParams.get('model') || 'gemini-2.5-flash';
+      const geminiPath = `/v1beta/models/${model}:generateContent`;
       const options = {
         hostname: GEMINI_HOST,
         path:     `${geminiPath}?key=${API_KEY}`,
         method:   'POST',
-        headers:  { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) },
+        headers:  { 'Content-Type': 'application/json', 'Content-Length': body.length },
       };
-
       const upstream = https.request(options, upRes => {
         res.writeHead(upRes.statusCode, { 'Content-Type': 'application/json' });
         upRes.pipe(res);
       });
-
       upstream.on('error', err => {
         res.writeHead(502, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: err.message }));
       });
-
       upstream.write(body);
       upstream.end();
     });
