@@ -1292,7 +1292,7 @@ async function callGemini({ prompt, systemInstruction, fileData, fileMime, maxTo
     generationConfig: { maxOutputTokens: maxTokens, temperature: 0.2 },
   };
 
-  const modelsToTry = [GEMINI_MODEL, 'gemini-2.5-flash'];
+  const modelsToTry = [GEMINI_MODEL, 'gemini-2.5-flash', 'gemini-1.5-pro'];
   for (const model of modelsToTry) {
     const url = `${GEMINI_PROXY_URL}?model=${encodeURIComponent(model)}`;
     const delays = [0, 2000, 4000];

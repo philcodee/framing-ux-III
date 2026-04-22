@@ -25,7 +25,7 @@ export const handler = async (event) => {
     };
   }
 
-  const ALLOWED_MODELS = new Set(['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro']);
+  const ALLOWED_MODELS = new Set(['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-1.5-flash', 'gemini-1.5-pro']);
   const requestedModel = event.queryStringParameters?.model || 'gemini-2.5-flash';
   const model = ALLOWED_MODELS.has(requestedModel) ? requestedModel : 'gemini-2.5-flash';
   const geminiUrl = `${GEMINI_BASE}/models/${model}:generateContent?key=${apiKey}`;
