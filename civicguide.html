@@ -343,6 +343,12 @@ body {
   40%            { opacity: 1;   transform: scale(1); }
 }
 
+@keyframes ug-fade-up {
+  from { opacity: 0; transform: translateY(5px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.ug-fade-up { animation: ug-fade-up 0.35s var(--motion-standard) both; }
+
 /* body-01 on inverse surface */
 .agent-brief-text {
   font-size: 0.875rem;
@@ -482,7 +488,8 @@ body {
 }
 
 .fill-field input,
-.fill-field textarea {
+.fill-field textarea,
+.fill-field select {
   width: 100%;
   font-family: var(--ff-sans);
   font-size: 0.875rem;
@@ -497,7 +504,8 @@ body {
   transition: border-color var(--motion-fast) var(--motion-standard);
 }
 .fill-field input:focus,
-.fill-field textarea:focus {
+.fill-field textarea:focus,
+.fill-field select:focus {
   outline: 2px solid var(--cds-focus);
   outline-offset: -2px;
   border-bottom-color: var(--cds-focus);
@@ -517,6 +525,123 @@ textarea.fill-field-input {
   color: var(--cds-text-error);
   margin-top: var(--sp-02);
   line-height: 1rem;
+}
+
+.fill-section-heading {
+  font-size: 1.125rem;
+  font-weight: 400;
+  color: var(--cds-text-primary);
+  margin: var(--sp-04) 0 var(--sp-06);
+  padding-bottom: var(--sp-04);
+  border-bottom: 1px solid var(--cds-border-subtle-00);
+}
+
+.fill-hint {
+  font-size: 0.75rem;
+  letter-spacing: 0.32px;
+  color: var(--cds-text-helper);
+  margin-top: var(--sp-02);
+  line-height: 1rem;
+}
+
+.fill-hint-verify {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.32px;
+  color: var(--cds-text-helper);
+  border: 1px solid var(--cds-border-subtle);
+  padding: 0 var(--sp-02);
+  line-height: 1.25rem;
+  margin-left: var(--sp-02);
+  vertical-align: middle;
+}
+
+.fill-prefill-note {
+  font-size: 0.75rem;
+  color: var(--cds-text-helper);
+  border-left: 2px solid var(--cds-border-subtle);
+  padding: var(--sp-02) var(--sp-04);
+  margin-bottom: var(--sp-05);
+}
+
+.fill-attribution {
+  font-size: 0.6875rem;
+  color: var(--cds-text-placeholder);
+  margin-top: var(--sp-02);
+  letter-spacing: 0.32px;
+}
+
+.fill-field.is-filled input,
+.fill-field.is-filled textarea {
+  border-bottom-color: var(--cds-interactive);
+}
+
+.fill-field.is-filled .fill-label {
+  color: var(--cds-interactive);
+}
+
+.fill-options { display: flex; flex-direction: column; gap: var(--sp-03); margin-top: var(--sp-02); }
+
+.fill-option {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-03);
+  cursor: pointer;
+}
+
+.fill-option input[type="radio"],
+.fill-option input[type="checkbox"] {
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  flex-shrink: 0;
+  accent-color: var(--cds-interactive);
+  cursor: pointer;
+}
+
+.fill-option-label {
+  font-size: 0.875rem;
+  letter-spacing: 0.16px;
+  color: var(--cds-text-primary);
+  line-height: 1.25rem;
+  cursor: pointer;
+}
+
+/* ── Questionnaire ─────────────────────────────────────── */
+
+.question-item {
+  border-bottom: 1px solid var(--cds-border-subtle);
+  padding: var(--sp-05) 0;
+}
+.question-item:last-child { border-bottom: none; }
+
+.question-text {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--cds-text-primary);
+  margin-bottom: var(--sp-04);
+}
+
+.question-options {
+  display: flex;
+  gap: var(--sp-07);
+}
+
+.question-option {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-02);
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: var(--cds-text-secondary);
+}
+
+.question-option input {
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  accent-color: var(--cds-interactive);
+  cursor: pointer;
 }
 
 /* ── Review ────────────────────────────────────────────── */
@@ -671,6 +796,16 @@ textarea.fill-field-input {
 }
 .fill-progress-pip.is-done   { background: var(--cds-interactive); }
 .fill-progress-pip.is-active { background: var(--cds-text-primary); }
+
+.fill-tip {
+  font-size: 0.8125rem;
+  line-height: 1.375rem;
+  color: var(--cds-text-secondary);
+  border-left: 2px solid var(--cds-interactive);
+  padding: var(--sp-03) var(--sp-05);
+  margin-bottom: var(--sp-07);
+  background: var(--cds-layer-01);
+}
 
 /* ── Auth Screen ───────────────────────────────────────── */
 
@@ -1109,6 +1244,15 @@ textarea.fill-field-input {
         <button class="ug-back-btn" onclick="back()">Back</button>
       </div>
     </div>
+
+    <div id="questionnaire-block" style="display:none">
+      <p class="ug-sub" style="margin-bottom:var(--sp-06)">A few quick questions so we can skip sections that don't apply to you.</p>
+      <div id="question-list"></div>
+      <div class="phase-actions">
+        <button class="ug-confirm-btn" id="btn-questions">Continue</button>
+        <button class="ug-back-btn" id="btn-questions-back">Back</button>
+      </div>
+    </div>
   </section>
 
   <!-- Phase 3 — Fill -->
@@ -1177,7 +1321,7 @@ Return ONLY a valid JSON object — no markdown, no explanation. Use exactly thi
   "docType": "<specific document name, e.g. Driver's License Renewal Application>",
   "summary": "<2–3 plain sentences: what this document is and what the person needs to do>",
   "fields": [
-    { "id": "<camelCaseId>", "label": "<human-readable label>", "value": "<pre-filled value from document or profile if applicable, else empty string>", "type": "<text|date|signature|checkbox>", "sensitive": <true if SSN/financial account/password, else false> }
+    { "id": "<camelCaseId>", "label": "<human-readable label>", "value": "<pre-filled value from document or profile if applicable, else empty string>", "type": "<text|date|signature|checkbox>", "sensitive": <true if SSN/financial account/password, else false>, "section": "<logical group e.g. Personal Information, Address, Employment, Vehicle, Signature>" }
   ]
 }
 IMPORTANT: Only include fields the applicant must personally fill in. Skip:
@@ -1191,16 +1335,20 @@ Mark signature fields with "type": "signature". Keep the field list concise — 
 // ── State ────────────────────────────────────────────────
 
 const state = {
-  file:        null,
-  fileData:    null,
-  fileMime:    null,
-  fileUri:     null,
-  scanSummary: null,
-  location:    null,
-  domain:      null,
-  docType:     null,
-  fields:      [],
-  values:      {},
+  file:           null,
+  fileData:       null,
+  fileMime:       null,
+  fileUri:        null,
+  scanSummary:    null,
+  location:       null,
+  domain:         null,
+  docType:        null,
+  fields:         [],
+  values:         {},
+  questions:      [],
+  aliases:        [],
+  hiddenSections: [],
+  prefillCount:   0,
 };
 
 let currentPhase = 1;
@@ -1216,12 +1364,15 @@ async function saveFormState(stage) {
     doc_type: state.docType,
     stage,
     form_state: {
-      fields: state.fields,
-      values: state.values,
+      fields:         state.fields,
+      values:         state.values,
       fillGroupIndex,
-      scanSummary: state.scanSummary,
-      fileUri:  state.fileUri  || null,
-      fileMime: state.fileMime || null,
+      scanSummary:    state.scanSummary,
+      fileUri:        state.fileUri        || null,
+      fileMime:       state.fileMime       || null,
+      questions:      state.questions      || [],
+      aliases:        state.aliases        || [],
+      hiddenSections: state.hiddenSections || [],
     },
     updated_at: new Date().toISOString(),
   };
@@ -1255,12 +1406,15 @@ function restoreFormState(saved) {
   savedFormId       = saved.id;
   state.domain      = saved.domain;
   state.docType     = saved.doc_type;
-  state.scanSummary = saved.form_state.scanSummary;
-  state.fields      = saved.form_state.fields ?? [];
-  state.values      = saved.form_state.values ?? {};
-  state.fileUri     = saved.form_state.fileUri  ?? null;
-  state.fileMime    = saved.form_state.fileMime ?? null;
-  fillGroupIndex    = saved.form_state.fillGroupIndex ?? 0;
+  state.scanSummary    = saved.form_state.scanSummary;
+  state.fields         = saved.form_state.fields         ?? [];
+  state.values         = saved.form_state.values         ?? {};
+  state.fileUri        = saved.form_state.fileUri        ?? null;
+  state.fileMime       = saved.form_state.fileMime       ?? null;
+  state.questions      = saved.form_state.questions      ?? [];
+  state.aliases        = saved.form_state.aliases        ?? [];
+  state.hiddenSections = saved.form_state.hiddenSections ?? [];
+  fillGroupIndex       = saved.form_state.fillGroupIndex ?? 0;
   if (saved.stage === 'scan')   enterPhase(2);
   else if (saved.stage === 'review') enterPhase(4);
   else enterPhase(3);
@@ -1307,14 +1461,13 @@ async function uploadFileToGemini(fileData, mimeType) {
   });
   if (!res.ok) { console.error('[Gemini] upload failed', res.status, await res.text()); return null; }
   const json = await res.json();
-  console.log('[Gemini] upload ok, fileUri:', json.fileUri);
   return json.fileUri ?? null;
 }
 
 async function callGemini({ prompt, systemInstruction, fileUri, fileMime, fileData, maxTokens = 1024, model = GEMINI_MODEL }) {
   const parts = [];
-  if (fileUri && fileMime) { console.log('[Gemini] using file URI'); parts.push({ file_data: { mime_type: fileMime, file_uri: fileUri } }); }
-  else if (fileData && fileMime) { console.warn('[Gemini] falling back to inline_data'); parts.push({ inline_data: { mime_type: fileMime, data: fileData } }); }
+  if (fileUri && fileMime) { parts.push({ file_data: { mime_type: fileMime, file_uri: fileUri } }); }
+  else if (fileData && fileMime) { parts.push({ inline_data: { mime_type: fileMime, data: fileData } }); }
   parts.push({ text: prompt });
 
   const body = {
@@ -1342,8 +1495,33 @@ async function callGemini({ prompt, systemInstruction, fileUri, fileMime, fileDa
 
 function parseJSON(text) {
   if (!text) return null;
-  const cleaned = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
-  try { return JSON.parse(cleaned); } catch { return null; }
+  // Strip code fences
+  let cleaned = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+  // Try direct parse first
+  try { return JSON.parse(cleaned); } catch {}
+  // Extract outermost { ... } in case Gemini added preamble or postamble
+  const start = cleaned.indexOf('{');
+  const end   = cleaned.lastIndexOf('}');
+  if (start !== -1 && end > start) {
+    try { return JSON.parse(cleaned.slice(start, end + 1)); } catch {}
+  }
+  return null;
+}
+
+function normalizeCheckbox(val) {
+  const v = (val || '').toLowerCase();
+  if (['yes', 'y', 'true', 'on', '1'].includes(v)) return 'Yes';
+  if (['no', 'n', 'false', 'off', '0'].includes(v)) return 'No';
+  return '';
+}
+
+async function typewrite(el, text, speed = 15) {
+  el.textContent = '';
+  el.style.display = 'block';
+  for (const char of text) {
+    el.textContent += char;
+    await new Promise(r => setTimeout(r, speed));
+  }
 }
 
 function fileToBase64(file) {
@@ -1455,6 +1633,21 @@ async function extractAcroFields(file) {
     const buffer = await file.arrayBuffer();
     const pdf    = await pdfjs.getDocument({ data: buffer }).promise;
 
+    // Pre-pass: collect all buttonValues for radio groups across every page
+    const radioOptions = {};
+    for (let p = 1; p <= pdf.numPages; p++) {
+      const page = await pdf.getPage(p);
+      const anns = await page.getAnnotations();
+      for (const annot of anns) {
+        if (annot.subtype !== 'Widget' || !annot.radioButton || !annot.fieldName) continue;
+        if (!radioOptions[annot.fieldName]) radioOptions[annot.fieldName] = [];
+        const bv = annot.buttonValue;
+        if (bv && bv !== 'Off' && !radioOptions[annot.fieldName].includes(bv)) {
+          radioOptions[annot.fieldName].push(bv);
+        }
+      }
+    }
+
     const seen   = new Set();
     const fields = [];
 
@@ -1463,16 +1656,23 @@ async function extractAcroFields(file) {
       const annotations = await page.getAnnotations();
       for (const annot of annotations) {
         if (annot.subtype !== 'Widget' || !annot.fieldName || seen.has(annot.fieldName)) continue;
+
+        // Skip push buttons (Submit, Reset, Clear, Print — not data fields)
+        if (annot.fieldType === 'Btn' && !annot.checkBox && !annot.radioButton) continue;
+
         seen.add(annot.fieldName);
         const id       = annot.fieldName;
         const rawLabel = annot.alternativeText || id.split('.').pop().replace(/\[\d+\]$/, '');
         const label    = rawLabel.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/[_.\-]/g, ' ').trim() || id;
-        const type     = annot.fieldType === 'Sig'                          ? 'signature'
-                       : (annot.checkBox || annot.radioButton)              ? 'checkbox'
+        const type     = annot.fieldType === 'Sig'             ? 'signature'
+                       : (annot.checkBox || annot.radioButton) ? 'checkbox'
                        : 'text';
-        const sensitive = /ssn|social.?sec|password|pin\b|account.?num/i.test(id);
-        const value     = typeof annot.fieldValue === 'string' ? annot.fieldValue : '';
-        fields.push({ id, label, value, type, sensitive });
+        const sensitive  = /ssn|social.?sec|password|pin\b|account.?num/i.test(id);
+        const rawValue   = typeof annot.fieldValue === 'string' ? annot.fieldValue : '';
+        const value      = rawValue === 'Off' ? '' : rawValue;
+        const multiLine  = !!annot.multiLine;
+        const pdfOptions = radioOptions[id] ?? [];
+        fields.push({ id, label, value, type, sensitive, multiLine, pdfOptions });
       }
     }
     return fields.length ? fields : null;
@@ -1494,16 +1694,32 @@ async function initPhase2() {
   const continueBtn   = document.getElementById('btn-p2');
   const saveNoteEl    = document.getElementById('scan-save-note');
 
-  // If already scanned, just restore
+  async function revealScan(briefMsg, summary, domain, docType) {
+    thinkingEl.style.display = 'none';
+    await typewrite(briefText, briefMsg);
+    await new Promise(r => setTimeout(r, 350));
+    summaryEl.textContent = summary;
+    domainSelect.value = DOMAINS.includes(domain) ? domain : 'Other';
+    docTypeInput.value = docType || '';
+    confirmBlock.style.display = 'block';
+    confirmBlock.classList.add('ug-fade-up');
+  }
+
+  // If already scanned, restore to questionnaire (if we have questions) or scan confirm
   if (state.fields.length > 0) {
     thinkingEl.style.display = 'none';
-    briefText.style.display = 'block';
-    briefText.textContent = 'Document already analyzed. Confirm the details below.';
-    summaryEl.textContent = state.scanSummary || '';
-    domainSelect.value  = state.domain || 'Other';
-    docTypeInput.value  = state.docType || '';
-    confirmBlock.style.display = 'block';
-    continueBtn.addEventListener('click', confirmScan);
+    briefText.style.display  = 'block';
+    if (state.questions?.length > 0 || state.aliases?.length > 0) {
+      briefText.textContent = 'Document already analyzed.';
+      showQuestionnaire(state.questions, state.aliases);
+    } else {
+      briefText.textContent   = 'Document already analyzed. Confirm the details below.';
+      summaryEl.textContent   = state.scanSummary || '';
+      domainSelect.value      = state.domain || 'Other';
+      docTypeInput.value      = state.docType || '';
+      confirmBlock.style.display = 'block';
+      continueBtn.addEventListener('click', confirmScan);
+    }
     return;
   }
 
@@ -1519,36 +1735,138 @@ async function initPhase2() {
       state.values = {};
       acroFields.forEach(f => { state.values[f.id] = f.value || ''; });
 
-      // Text-only call to identify the form and pre-fill from profile
-      const fieldList = acroFields.map(f => f.id).join(', ');
+      // Show specific latency message so the user knows what's happening
+      thinkingEl.style.display = 'none';
+      briefText.style.display  = 'block';
+      briefText.textContent    = `Found ${acroFields.length} fields — reading the form and enriching labels…`;
+
+      // Text-only call — indexed list so Gemini never needs to reproduce long field IDs as keys
+      const fieldList = acroFields.map((f, i) => {
+        const hint = f.pdfOptions?.length ? ` (${f.pdfOptions.length} PDF options)` : '';
+        const ml   = f.multiLine ? ' [multiline]' : '';
+        return `${i} [${f.type}${ml}]: ${f.id}${hint}`;
+      }).join('\n');
       const profileHint = (userProfile?.name || userProfile?.location)
         ? `User profile: ${[userProfile.name && `name="${userProfile.name}"`, userProfile.location && `location="${userProfile.location}"`].filter(Boolean).join(', ')}.`
         : '';
       const { text: raw } = await callGemini({
-        prompt: `These AcroForm field IDs were extracted from a government PDF: ${fieldList}.\n${profileHint}\nReturn JSON only:\n{"domain":"<one of: ${DOMAINS.join('|')}>","docType":"<short form name>","summary":"<one sentence>","prefill":{"<fieldId>":"<value>"}}\nOnly include prefill entries where the profile data clearly matches the field. Leave sensitive fields (SSN, financial) out of prefill.`,
-        maxTokens: 512,
+        prompt: `You are helping a user fill out a government PDF form. Below is a numbered list of AcroForm field IDs extracted from the PDF. Clean up each one.
+
+If you recognise this form from your training knowledge, use that to improve labels, sections, hints, and options.
+
+Fields (index [type]: id):
+${fieldList}
+
+${profileHint}
+
+Return JSON only — no markdown:
+{
+  "domain": "<one of: ${DOMAINS.join('|')}>",
+  "docType": "<short form name>",
+  "summary": "<2 sentences: what this form is and what the user needs to do>",
+  "tip": "<1 practical sentence: documents to have ready, a common mistake, or a key requirement. Omit if nothing useful.>",
+  "fields": [
+    { "i": <index>, "label": "<3-5 word label>", "section": "<section name>", "hint": "<1 sentence or empty string>", "options": ["<choice 1>", "<choice 2>"], "prefill": "<value or empty string>", "skip": <true|false>, "showIf": { "field": <trigger index>, "value": "<trigger value>" } or null, "confidence": "high" | "low" }
+  ]
+}
+
+Rules — follow every one exactly:
+
+SKIP:
+- skip: true for office-use-only fields, administrative codes, batch numbers, purely instructional text, and form navigation buttons (Submit, Reset, Clear, Print).
+- skip: true for any field whose label reads like a heading, button, or raw instruction rather than a data prompt.
+
+LABEL:
+- 3-5 plain English words. Strip repetitive prefixes: PRIMARY REGISTRANT, NAME OF, CO-REGISTRANT, THE ADDRESS WHERE, NYS, New York State.
+- Rephrase headings or commands into answerable prompts (e.g. "I Want To" → "Registration Purpose", "Reset Clear" → skip it).
+
+SECTION:
+- Use the form's own section structure. Short and human-friendly (e.g. "Your Information", "Your Vehicle", "Co-Registrant", "Your Address", "Mailing Address", "Vehicle Use", "Certification").
+
+HINT:
+- Only where it genuinely helps: format requirements, which document to reference, or what the field means. Empty string otherwise. Must be a complete sentence.
+
+OPTIONS — CRITICAL:
+- Every [checkbox] field MUST have a non-empty options array. No exceptions.
+- If the field list shows "(N PDF options)", that field has N selectable values in the PDF — use your form knowledge to supply the correct concise option labels.
+- If no PDF options are shown, infer from your knowledge of the form or the field label.
+- For a genuinely binary field, use ["Yes", "No"].
+- For a multi-choice selector (purpose, fuel type, body type, sex, title type, etc.), list every valid choice.
+- An empty options array for a [checkbox] field will break the UI. Return at least ["Yes", "No"] if you are uncertain.
+- KEEP EVERY OPTION LABEL SHORT — maximum 6 words. Strip parenthetical legal notes, citations, and explanatory text. Use the plain label only (e.g. "Ambulance" not "Ambulance (see NYS DOT requirements…)", "Tow Truck" not "A commercial tow truck with a gross vehicle weight rating of at least 8,600 pounds").
+
+MULTILINE:
+- For fields marked [multiline] or any field likely to contain a long answer (explanation, description, remarks), set hint to note that a full sentence or more may be needed.
+
+CONFIDENCE:
+- confidence: "high" if the label, hint, or options come from your training knowledge of this specific form.
+- confidence: "low" if you are inferring from the field name alone or are uncertain.
+- This is shown to the user as a "Verify" indicator on low-confidence hints.
+
+SHOW IF:
+- Set showIf when a field only appears if another field has a specific value.
+- showIf.field is the integer index of the trigger field from the list above.
+- showIf.value is the exact option string that makes this field visible.
+- Common cases: "Other" free-text fields, conditional follow-ups (e.g. describe modifications only if modifications = Yes), sub-questions that only apply for a specific selection.
+- Omit showIf (or set null) for fields that are always visible.
+
+PREFILL:
+- Only where profile data is an obvious match. Never prefill sensitive fields.`,
+        maxTokens: 8192,
         model: 'gemini-2.5-flash-lite',
       });
 
+      if (!raw) console.warn('[AcroForm] Gemini call returned no text — skipping enrichment');
       const meta = parseJSON(raw);
       state.domain      = meta?.domain || 'Other';
       state.docType     = meta?.docType || state.file.name.replace(/\.pdf$/i, '');
       state.scanSummary = meta?.summary || `Fillable PDF — ${acroFields.length} fields detected.`;
-      if (meta?.prefill) {
-        Object.entries(meta.prefill).forEach(([id, val]) => {
-          if (id in state.values && !state.values[id]) state.values[id] = val;
+      state.tip         = meta?.tip || null;
+
+      if (Array.isArray(meta?.fields)) {
+        meta.fields.forEach(item => {
+          const f = acroFields[item.i];
+          if (!f) return;
+          if (item.label)      f.label      = item.label;
+          if (item.hint)       f.hint       = item.hint;
+          if (item.section)    f.section    = item.section;
+          if (item.confidence) f.confidence = item.confidence;
+          if (item.prefill && !state.values[f.id]) {
+            state.values[f.id] = item.prefill;
+            state.prefillCount++;
+          }
+          if (item.skip)    f._skip   = true;
+          if (item.showIf?.field !== undefined && item.showIf?.value) {
+            const trigger = acroFields[item.showIf.field];
+            if (trigger) f.showIf = { fieldId: trigger.id, value: item.showIf.value };
+          }
+          // Use Gemini options if non-empty; fall back to values extracted from the PDF
+          if (Array.isArray(item.options) && item.options.length > 0) {
+            f.options = item.options;
+          } else if (f.pdfOptions?.length > 0) {
+            f.options = f.pdfOptions;
+          }
         });
       }
 
+      state.fields = acroFields.filter(f => !f._skip);
+
+      // Build display-label → PDF buttonValue maps for radio fields where counts align
+      state.fields.forEach(f => {
+        if (f.options?.length && f.pdfOptions?.length === f.options.length) {
+          f.optionValueMap = {};
+          f.options.forEach((opt, i) => { f.optionValueMap[opt] = f.pdfOptions[i]; });
+        }
+      });
+
+      groupDateFields();
+
       setStatus('ready');
-      thinkingEl.style.display = 'none';
-      briefText.textContent = `Found ${acroFields.length} form fields. Confirm the details below and we'll walk through it together.`;
-      briefText.style.display = 'block';
-      summaryEl.textContent = state.scanSummary;
-      domainSelect.value = DOMAINS.includes(state.domain) ? state.domain : 'Other';
-      docTypeInput.value = state.docType;
-      confirmBlock.style.display = 'block';
       continueBtn.addEventListener('click', confirmScan);
+      await revealScan(
+        `I recognise this as ${state.docType} — labels, sections, and hints are drawn from my knowledge of this specific form. Confirm the details below.`,
+        state.scanSummary, state.domain, state.docType
+      );
       return;
     }
   }
@@ -1632,29 +1950,266 @@ async function initPhase2() {
   state.scanSummary = result.summary;
   state.fields      = result.fields;
   result.fields.forEach(f => { if (!(f.id in state.values)) state.values[f.id] = f.value || ''; });
-
-  briefText.textContent = `I've read this document. Confirm the details below and we'll walk through it together.`;
-  briefText.style.display = 'block';
-
-  summaryEl.textContent = result.summary;
-  domainSelect.value = DOMAINS.includes(result.domain) ? result.domain : 'Other';
-  docTypeInput.value = result.docType || '';
-  confirmBlock.style.display = 'block';
+  groupDateFields();
 
   continueBtn.addEventListener('click', confirmScan);
+  await revealScan(
+    `I've read this document. Confirm the details below and we'll walk through it together.`,
+    result.summary, result.domain, result.docType || ''
+  );
 
-  function confirmScan() {
+  async function confirmScan() {
     state.domain  = domainSelect.value;
     state.docType = docTypeInput.value.trim();
-    saveFormState('fill');
-    advance();
+
+    continueBtn.disabled    = true;
+    continueBtn.textContent = 'One moment…';
+    setStatus('thinking');
+
+    const { questions, aliases } = await callGeminiQuestions();
+    state.questions = questions;
+    state.aliases   = aliases;
+
+    setStatus('ready');
+    continueBtn.disabled    = false;
+    continueBtn.textContent = 'Looks right — continue';
+
+    if (questions.length === 0 && aliases.length === 0) {
+      saveFormState('fill');
+      advance();
+      return;
+    }
+
+    confirmBlock.style.display = 'none';
+    showQuestionnaire(questions, aliases);
   }
+}
+
+// ── Questionnaire (Phase 2 → 3 interstitial) ─────────────
+
+async function callGeminiQuestions() {
+  const empty = { questions: [], aliases: [] };
+  try {
+    const sections = [...new Set(state.fields.map(f => f.section || 'General'))];
+    if (sections.length <= 1) return empty;
+
+    const sectionMap = {};
+    state.fields.forEach(f => {
+      const s = f.section || 'General';
+      if (!sectionMap[s]) sectionMap[s] = [];
+      sectionMap[s].push(f.label);
+    });
+    const fieldContext = Object.entries(sectionMap)
+      .map(([s, labels]) => `${s}: ${labels.join(', ')}`)
+      .join('\n');
+
+    const { text: raw } = await callGemini({
+      prompt: `You are helping a user fill out "${state.docType}" — a ${state.domain} government form.
+
+The form has these sections and fields:
+${fieldContext}
+
+Return two arrays:
+
+1. "questions" — yes/no questions to skip optional sections entirely
+2. "aliases" — yes/no questions to pre-fill repeated fields from one section into another
+
+Return JSON only — no markdown:
+{
+  "questions": [
+    {
+      "id": "<camelCase>",
+      "text": "<plain-English yes/no question, e.g. 'Do you have a co-registrant on this vehicle?'>",
+      "default": false,
+      "showSections": ["<exact section name from the list above>"]
+    }
+  ],
+  "aliases": [
+    {
+      "id": "<camelCase>",
+      "text": "<plain-English yes/no question, e.g. 'Is your mailing address the same as your home address?'>",
+      "default": true,
+      "copyFromSection": "<exact section name>",
+      "copyToSection": "<exact section name>"
+    }
+  ]
+}
+
+Rules for questions:
+- Only for genuinely optional sections (co-owner, lienholder, trade-in, etc.)
+- showSections must use exact section names from the list above
+- default: false — section hidden unless user says Yes
+- Maximum 4 questions
+
+Rules for aliases:
+- Only when two sections contain fields with the same meaning (e.g. home address and mailing address)
+- copyFromSection and copyToSection must be exact section names from the list above
+- default: true — assume same unless user says No
+- Do not alias sections already covered by a question above
+- Maximum 3 aliases`,
+      maxTokens: 768,
+      model: 'gemini-2.5-flash-lite',
+    });
+    const parsed = parseJSON(raw);
+    return {
+      questions: parsed?.questions ?? [],
+      aliases:   parsed?.aliases   ?? [],
+    };
+  } catch {
+    return empty;
+  }
+}
+
+function showQuestionnaire(questions = [], aliases = []) {
+  const block = document.getElementById('questionnaire-block');
+  const list  = document.getElementById('question-list');
+  list.innerHTML = '';
+
+  const all = [
+    ...questions.map(q => ({ ...q, kind: 'section' })),
+    ...aliases.map(a => ({ ...a, kind: 'alias' })),
+  ];
+
+  all.forEach(item => {
+    const row = document.createElement('div');
+    row.className        = 'question-item';
+    row.dataset.kind     = item.kind;
+    row.dataset.id       = item.id;
+
+    const text = document.createElement('p');
+    text.className   = 'question-text';
+    text.textContent = item.text;
+    row.appendChild(text);
+
+    const opts = document.createElement('div');
+    opts.className = 'question-options';
+
+    ['Yes', 'No'].forEach(choice => {
+      const lbl = document.createElement('label');
+      lbl.className = 'question-option';
+      const inp = document.createElement('input');
+      inp.type    = 'radio';
+      inp.name    = `q-${item.id}`;
+      inp.value   = choice.toLowerCase();
+      inp.checked = (choice === 'Yes' && item.default) || (choice === 'No' && !item.default);
+      lbl.appendChild(inp);
+      lbl.appendChild(document.createTextNode(` ${choice}`));
+      opts.appendChild(lbl);
+    });
+
+    row.appendChild(opts);
+    list.appendChild(row);
+  });
+
+  document.getElementById('btn-questions').onclick = confirmQuestionnaire;
+  document.getElementById('btn-questions-back').onclick = () => {
+    block.style.display = 'none';
+    document.getElementById('scan-confirm-block').style.display = 'block';
+  };
+
+  block.style.display = 'block';
+  block.classList.add('ug-fade-up');
+}
+
+function confirmQuestionnaire() {
+  const hidden = new Set();
+  state.questions.forEach(q => {
+    const answer = document.querySelector(`input[name="q-${q.id}"]:checked`)?.value;
+    if (answer !== 'yes') q.showSections.forEach(s => hidden.add(s));
+  });
+  state.hiddenSections = [...hidden];
+
+  state.aliases.forEach(a => {
+    const answer = document.querySelector(`input[name="q-${a.id}"]:checked`)?.value;
+    a.active = answer === 'yes' || (answer === undefined && a.default === true);
+  });
+
+  applyAliases();
+  saveFormState('fill');
+  advance();
+}
+
+function applyAliases() {
+  (state.aliases || []).forEach(alias => {
+    if (!alias.active) return;
+    const fromFields = state.fields.filter(f => f.section === alias.copyFromSection);
+    const toFields   = state.fields.filter(f => f.section === alias.copyToSection);
+    fromFields.forEach(from => {
+      const val = state.values[from.id];
+      if (!val) return;
+      const match = toFields.find(t =>
+        t.label.toLowerCase().trim() === from.label.toLowerCase().trim()
+      );
+      if (match) state.values[match.id] = val;
+    });
+  });
+}
+
+// ── Date-field grouping ──────────────────────────────────
+
+function groupDateFields() {
+  const result = [];
+  const fields = state.fields;
+  let i = 0;
+  while (i < fields.length) {
+    const f  = fields[i];
+    const f2 = fields[i + 1];
+    const f3 = fields[i + 2];
+
+    const isMonth = f  && /month/i.test(f.label  + ' ' + f.id);
+    const isDay   = f2 && /\bday\b/i.test(f2.label + ' ' + f2.id);
+    const isYear  = f3 && /year/i.test(f3.label  + ' ' + f3.id);
+    const sameSection = f2 && f3 && f.section === f2.section && f.section === f3.section;
+
+    if (isMonth && isDay && isYear && sameSection) {
+      const syntheticId = `__date__${f.id}`;
+      const label = f.label.replace(/\s*\bmonth\b\s*/i, '').trim() || 'Date';
+      const parts = [
+        { id: f.id,  part: 'month' },
+        { id: f2.id, part: 'day'   },
+        { id: f3.id, part: 'year'  },
+      ];
+      // Assemble any pre-existing values into the synthetic key
+      const m = (state.values[f.id]  || '').padStart(2, '0');
+      const d = (state.values[f2.id] || '').padStart(2, '0');
+      const y = state.values[f3.id]  || '';
+      if (m.trim() || d.trim() || y) state.values[syntheticId] = `${m}/${d}/${y}`;
+      result.push({ id: syntheticId, label, type: 'date-group', section: f.section, sensitive: false, parts });
+      i += 3;
+    } else {
+      result.push(f);
+      i++;
+    }
+  }
+  state.fields = result;
 }
 
 // ── Phase 3 — Fill ───────────────────────────────────────
 
-const FIELDS_PER_GROUP = 3;
 let fillGroupIndex = 0;
+
+const MAX_SECTION_SIZE = 6;
+
+function getSections() {
+  const hidden = new Set(state.hiddenSections);
+  const seen = [];
+  const map  = {};
+  state.fields.forEach(f => {
+    const s = f.section || 'General';
+    if (hidden.has(s)) return;
+    if (!map[s]) { map[s] = []; seen.push(s); }
+    map[s].push(f);
+  });
+  const sections = [];
+  seen.forEach(name => {
+    const fields = map[name];
+    const label  = name === 'General' ? null : name;
+    for (let i = 0; i < fields.length; i += MAX_SECTION_SIZE) {
+      sections.push({ name: label, fields: fields.slice(i, i + MAX_SECTION_SIZE) });
+    }
+  });
+  return sections;
+}
 
 function initPhase3() {
   fillGroupIndex = 0;
@@ -1666,25 +2221,22 @@ function renderFillGroup() {
   const continueBtn = document.getElementById('btn-p3');
   container.innerHTML = '';
 
-  const groups     = Math.ceil(state.fields.length / FIELDS_PER_GROUP);
-  const groupFields = state.fields.slice(
-    fillGroupIndex * FIELDS_PER_GROUP,
-    (fillGroupIndex + 1) * FIELDS_PER_GROUP
-  );
-  const isLast = fillGroupIndex === groups - 1;
+  const sections    = getSections();
+  const { name: sectionName, fields: groupFields } = sections[fillGroupIndex] ?? { name: null, fields: [] };
+  const isLast = fillGroupIndex === sections.length - 1;
 
-  // Progress indicator
+  // Progress indicator (count + pips only — section name moved to heading below)
   const progress = document.createElement('div');
   progress.className = 'fill-progress';
 
   const progressLabel = document.createElement('span');
   progressLabel.className = 'fill-progress-label';
-  progressLabel.textContent = `Part ${fillGroupIndex + 1} of ${groups}`;
+  progressLabel.textContent = `${fillGroupIndex + 1} of ${sections.length}`;
   progress.appendChild(progressLabel);
 
   const track = document.createElement('div');
   track.className = 'fill-progress-track';
-  for (let i = 0; i < groups; i++) {
+  for (let i = 0; i < sections.length; i++) {
     const pip = document.createElement('div');
     pip.className = 'fill-progress-pip' +
       (i < fillGroupIndex ? ' is-done' : i === fillGroupIndex ? ' is-active' : '');
@@ -1693,10 +2245,40 @@ function renderFillGroup() {
   progress.appendChild(track);
   container.appendChild(progress);
 
-  // Fields for this group
+  if (sectionName) {
+    const heading = document.createElement('h3');
+    heading.className = 'fill-section-heading';
+    heading.textContent = sectionName;
+    container.appendChild(heading);
+  }
+
+  if (fillGroupIndex === 0 && state.prefillCount > 0) {
+    const note = document.createElement('p');
+    note.className   = 'fill-prefill-note';
+    note.textContent = `We pre-filled ${state.prefillCount} field${state.prefillCount > 1 ? 's' : ''} from your profile — review them before continuing.`;
+    container.appendChild(note);
+  }
+
+  if (fillGroupIndex === 0 && state.tip) {
+    const tip = document.createElement('p');
+    tip.className = 'fill-tip';
+    tip.textContent = state.tip;
+    container.appendChild(tip);
+    const attr = document.createElement('p');
+    attr.className   = 'fill-attribution';
+    attr.textContent = 'AI-generated guidance — verify important details against the official form instructions.';
+    container.appendChild(attr);
+  }
+
+  // evaluateVisibility is called after each value change to show/hide conditional fields
+  let evaluateVisibility = () => {};
+  const fieldWraps = [];
+
+  // Fields for this section
   groupFields.forEach(field => {
     const wrap = document.createElement('div');
     wrap.className = 'fill-field';
+    fieldWraps.push({ field, wrap });
 
     const header = document.createElement('div');
     header.className = 'fill-field-header';
@@ -1768,15 +2350,120 @@ function renderFillGroup() {
         state.values[field.id] = '';
         canvas.classList.remove('has-sig');
       });
+    } else if (field.type === 'date-group') {
+      const m = state.values[field.parts[0].id] || '';
+      const d = state.values[field.parts[1].id] || '';
+      const y = state.values[field.parts[2].id] || '';
+      const assembled = (m || d || y) ? `${m.padStart(2,'0')}/${d.padStart(2,'0')}/${y}` : '';
+      const input = document.createElement('input');
+      input.type        = 'text';
+      input.className   = 'fill-field-input';
+      input.placeholder = 'MM/DD/YYYY';
+      input.value       = assembled;
+      if (assembled) wrap.classList.add('is-filled');
+      input.addEventListener('input', () => {
+        const [mo, dy, yr] = input.value.split('/');
+        state.values[field.parts[0].id] = (mo || '').trim();
+        state.values[field.parts[1].id] = (dy || '').trim();
+        state.values[field.parts[2].id] = (yr || '').trim();
+        state.values[field.id] = input.value;
+        wrap.classList.toggle('is-filled', !!input.value.trim());
+        evaluateVisibility();
+      });
+      wrap.appendChild(input);
+    } else if (field.options?.length > 0) {
+      const current = state.values[field.id] ?? field.value ?? '';
+      if (field.options.length > 5) {
+        const select = document.createElement('select');
+        select.className = 'fill-field-input';
+        const blank = document.createElement('option');
+        blank.value = ''; blank.textContent = '— Select —';
+        select.appendChild(blank);
+        field.options.forEach(opt => {
+          const o = document.createElement('option');
+          o.value = opt; o.textContent = opt;
+          o.selected = current === opt;
+          select.appendChild(o);
+        });
+        if (current) wrap.classList.add('is-filled');
+        select.addEventListener('change', () => {
+          state.values[field.id] = select.value;
+          wrap.classList.toggle('is-filled', !!select.value);
+          evaluateVisibility();
+        });
+        wrap.appendChild(select);
+      } else {
+        const groupName = `field-${field.id.replace(/\s+/g, '-').slice(0, 40)}`;
+        const optList = document.createElement('div');
+        optList.className = 'fill-options';
+        field.options.forEach(opt => {
+          const lbl = document.createElement('label');
+          lbl.className = 'fill-option';
+          const inp = document.createElement('input');
+          inp.type = 'radio';
+          inp.name = groupName;
+          inp.value = opt;
+          inp.checked = current === opt;
+          const span = document.createElement('span');
+          span.className = 'fill-option-label';
+          span.textContent = opt;
+          lbl.appendChild(inp);
+          lbl.appendChild(span);
+          inp.addEventListener('change', () => {
+            state.values[field.id] = opt;
+            wrap.classList.add('is-filled');
+            evaluateVisibility();
+          });
+          optList.appendChild(lbl);
+        });
+        if (current) wrap.classList.add('is-filled');
+        wrap.appendChild(optList);
+      }
+    } else if (field.type === 'checkbox') {
+      // Gemini didn't provide options — render as a single checkbox (opt-in style)
+      const lbl = document.createElement('label');
+      lbl.className = 'fill-option';
+      const inp = document.createElement('input');
+      inp.type = 'checkbox';
+      inp.checked = ['yes', 'true', 'on', '1'].includes((state.values[field.id] ?? '').toLowerCase());
+      const span = document.createElement('span');
+      span.className = 'fill-option-label';
+      span.textContent = field.label;
+      lbl.appendChild(inp);
+      lbl.appendChild(span);
+      inp.addEventListener('change', () => {
+        state.values[field.id] = inp.checked ? 'Yes' : 'No';
+        wrap.classList.toggle('is-filled', inp.checked);
+        evaluateVisibility();
+      });
+      wrap.appendChild(lbl);
     } else {
-      const isLong = (state.values[field.id] || field.value || '').length > 60;
+      const isLong = field.multiLine || (state.values[field.id] || field.value || '').length > 60;
       const input = document.createElement(isLong ? 'textarea' : 'input');
       input.className = 'fill-field-input';
       if (input.tagName === 'INPUT') input.type = field.type === 'date' ? 'date' : 'text';
       input.value = state.values[field.id] ?? field.value ?? '';
       input.placeholder = field.label;
-      input.addEventListener('input', () => { state.values[field.id] = input.value; });
+      if (input.value) wrap.classList.add('is-filled');
+      input.addEventListener('input', () => {
+        state.values[field.id] = input.value;
+        wrap.classList.toggle('is-filled', !!input.value);
+        evaluateVisibility();
+      });
       wrap.appendChild(input);
+    }
+
+    if (field.hint) {
+      const hint = document.createElement('div');
+      hint.className = 'fill-hint';
+      hint.textContent = field.hint;
+      if (field.confidence === 'low') {
+        const badge = document.createElement('span');
+        badge.className   = 'fill-hint-verify';
+        badge.textContent = 'Verify';
+        hint.appendChild(badge);
+      }
+      wrap.appendChild(hint);
     }
 
     if (field.sensitive) {
@@ -1788,6 +2475,17 @@ function renderFillGroup() {
 
     container.appendChild(wrap);
   });
+
+  // Define and run visibility evaluation for showIf fields
+  evaluateVisibility = function() {
+    fieldWraps.forEach(({ field, wrap }) => {
+      if (!field.showIf) return;
+      const conditionMet = state.values[field.showIf.fieldId] === field.showIf.value;
+      wrap.style.display = conditionMet ? '' : 'none';
+      if (!conditionMet) state.values[field.id] = '';
+    });
+  };
+  evaluateVisibility();
 
   // Update continue button label and handler
   continueBtn.textContent = isLast ? 'Review answers' : 'Next';
@@ -1811,10 +2509,14 @@ function renderFillGroup() {
 // ── Phase 4 — Review ─────────────────────────────────────
 
 function initPhase4() {
+  applyAliases();
   const tableWrap = document.getElementById('review-table');
 
   const table = document.createElement('table');
+  const hiddenSections = new Set(state.hiddenSections);
   state.fields.forEach(field => {
+    if (hiddenSections.has(field.section)) return;
+    if (field.showIf && state.values[field.showIf.fieldId] !== field.showIf.value) return;
     const tr = document.createElement('tr');
 
     const tdLabel = document.createElement('td');
@@ -1823,7 +2525,14 @@ function initPhase4() {
 
     const tdVal = document.createElement('td');
     const valSpan = document.createElement('span');
-    valSpan.textContent = state.values[field.id] || '—';
+    if (field.type === 'date-group') {
+      const m = state.values[field.parts[0].id] || '';
+      const d = state.values[field.parts[1].id] || '';
+      const y = state.values[field.parts[2].id] || '';
+      valSpan.textContent = (m || d || y) ? `${m.padStart(2,'0')}/${d.padStart(2,'0')}/${y}` : '—';
+    } else {
+      valSpan.textContent = state.values[field.id] || '—';
+    }
     tdVal.appendChild(valSpan);
 
     const editBtn = document.createElement('button');
@@ -1864,7 +2573,7 @@ function initPhase5() {
     btn.disabled = true;
     btn.textContent = 'Generating…';
     try {
-      exportToPDF();
+      await exportToFilledPDF();
     } catch (err) {
       console.error('[Export]', err);
       btn.textContent = 'Export failed — try again';
@@ -1876,58 +2585,121 @@ function initPhase5() {
   });
 }
 
-function exportToPDF() {
-  const rows = state.fields.map(field => {
-    const val = state.values[field.id];
-    const isSignature = field.type === 'signature' && val && val.startsWith('data:image');
-    const valueCell = isSignature
-      ? `<img src="${val}" style="max-width:240px;height:auto;display:block;border:1px solid #e0e0e0">`
-      : `<span>${val || '<em style="color:#a8a8a8">—</em>'}</span>`;
-    return `
-      <tr>
-        <td class="label">${field.label}</td>
-        <td class="value">${valueCell}</td>
-      </tr>`;
-  }).join('');
+async function exportToFilledPDF() {
+  if (!state.file) throw new Error('Original file not available');
 
-  const html = `<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>${state.docType || 'CivicGuide Export'}</title>
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;600&display=swap');
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'IBM Plex Sans', Helvetica, Arial, sans-serif; color: #161616; padding: 40px; }
-  header { border-bottom: 2px solid #161616; padding-bottom: 16px; margin-bottom: 24px; }
-  h1 { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
-  .meta { font-size: 12px; color: #525252; margin-bottom: 8px; }
-  .summary { font-size: 13px; color: #525252; line-height: 1.5; }
-  table { width: 100%; border-collapse: collapse; margin-top: 8px; }
-  td { padding: 10px 0; border-bottom: 1px solid #e0e0e0; vertical-align: top; font-size: 13px; }
-  td.label { width: 180px; font-size: 11px; color: #6f6f6f; padding-right: 16px; padding-top: 12px; }
-  td.value { color: #161616; }
-  tr:last-child td { border-bottom: none; }
-  footer { margin-top: 32px; font-size: 11px; color: #6f6f6f; border-top: 1px solid #e0e0e0; padding-top: 12px; }
-  @media print { body { padding: 0; } }
-</style>
-</head>
-<body>
-<header>
-  <h1>${state.docType || 'Government Form'}</h1>
-  <p class="meta">${state.domain || ''}</p>
-  ${state.scanSummary ? `<p class="summary">${state.scanSummary}</p>` : ''}
-</header>
-<table>${rows}</table>
-<footer>CivicGuide &nbsp;•&nbsp; Always verify your final submission through official government channels.</footer>
-<script>window.onload = () => { window.print(); }<\/script>
-</body>
-</html>`;
+  const pdfjs = await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.mjs');
+  pdfjs.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.mjs';
 
-  const win = window.open('', '_blank');
-  if (!win) throw new Error('Popup blocked');
-  win.document.write(html);
-  win.document.close();
+  const jsPDF = await new Promise((resolve, reject) => {
+    if (window.jspdf) return resolve(window.jspdf.jsPDF);
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    script.onload = () => resolve(window.jspdf.jsPDF);
+    script.onerror = reject;
+    document.head.appendChild(script);
+  });
+
+  const buffer = await state.file.arrayBuffer();
+  const pdfDoc = await pdfjs.getDocument({ data: buffer }).promise;
+
+  const valueMap        = {};
+  const optionValueMaps = {};
+  state.fields.forEach(f => {
+    if (f.type === 'date-group') {
+      f.parts.forEach(p => { if (state.values[p.id]) valueMap[p.id] = state.values[p.id]; });
+      return;
+    }
+    if (f.type !== 'signature' && state.values[f.id]) valueMap[f.id] = state.values[f.id];
+    if (f.optionValueMap) optionValueMaps[f.id] = f.optionValueMap;
+  });
+
+  const SCALE = 2;
+  let doc = null;
+  const drawnText = new Set();
+
+  for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
+    const page     = await pdfDoc.getPage(pageNum);
+    const viewport = page.getViewport({ scale: SCALE });
+
+    const canvas  = document.createElement('canvas');
+    canvas.width  = viewport.width;
+    canvas.height = viewport.height;
+    const ctx     = canvas.getContext('2d');
+    await page.render({ canvasContext: ctx, viewport }).promise;
+
+    const annotations = await page.getAnnotations();
+    for (const annot of annotations) {
+      if (annot.subtype !== 'Widget' || !annot.fieldName || annot.fieldType === 'Sig') continue;
+      const val = valueMap[annot.fieldName];
+      if (!val) continue;
+
+      const [vx1, vy1, vx2, vy2] = viewport.convertToViewportRectangle(annot.rect);
+      const x = Math.min(vx1, vx2);
+      const y = Math.min(vy1, vy2);
+      const w = Math.abs(vx2 - vx1);
+      const h = Math.abs(vy2 - vy1);
+
+      if (annot.radioButton) {
+        // Resolve display label → PDF export value via map; fall back to direct comparison
+        const pdfVal = optionValueMaps[annot.fieldName]?.[val] ?? val;
+        const match  = annot.buttonValue === pdfVal ||
+                       annot.buttonValue?.toLowerCase() === pdfVal.toLowerCase();
+        if (match) {
+          ctx.save();
+          const cx = x + w / 2;
+          const cy = y + h / 2;
+          ctx.beginPath();
+          ctx.arc(cx, cy, Math.min(w, h) * 0.28, 0, 2 * Math.PI);
+          ctx.fillStyle = '#1a1a1a';
+          ctx.fill();
+          ctx.restore();
+        }
+      } else if (annot.checkBox) {
+        const checked = ['yes', 'true', 'on', '1'].includes(val.toLowerCase());
+        if (checked) {
+          ctx.save();
+          ctx.strokeStyle = '#1a1a1a';
+          ctx.lineWidth   = Math.max(2, h * 0.12);
+          ctx.lineCap     = 'round';
+          ctx.lineJoin    = 'round';
+          ctx.beginPath();
+          ctx.moveTo(x + w * 0.15, y + h * 0.50);
+          ctx.lineTo(x + w * 0.40, y + h * 0.75);
+          ctx.lineTo(x + w * 0.85, y + h * 0.22);
+          ctx.stroke();
+          ctx.restore();
+        }
+      } else {
+        // Text field — draw only on the first annotation for this field name
+        if (!drawnText.has(annot.fieldName)) {
+          drawnText.add(annot.fieldName);
+          const fontSize = Math.min(h * 0.58, 13 * SCALE);
+          ctx.save();
+          ctx.beginPath();
+          ctx.rect(x + 2, y + 2, w - 4, h - 4);
+          ctx.clip();
+          ctx.font      = `${fontSize}px Helvetica, Arial, sans-serif`;
+          ctx.fillStyle = '#1a1a1a';
+          ctx.fillText(val, x + 5, y + h * 0.70);
+          ctx.restore();
+        }
+      }
+    }
+
+    const imgData      = canvas.toDataURL('image/jpeg', 0.92);
+    const pageWidthPt  = viewport.width  / SCALE;
+    const pageHeightPt = viewport.height / SCALE;
+
+    if (!doc) {
+      doc = new jsPDF({ unit: 'pt', format: [pageWidthPt, pageHeightPt], compress: true });
+    } else {
+      doc.addPage([pageWidthPt, pageHeightPt]);
+    }
+    doc.addImage(imgData, 'JPEG', 0, 0, pageWidthPt, pageHeightPt);
+  }
+
+  doc.save(`${state.docType || 'filled-form'}.pdf`);
 }
 
 // ── Start Over ───────────────────────────────────────────
@@ -1935,8 +2707,9 @@ function exportToPDF() {
 function startOver() {
   deleteSavedForm();
   state.file = null; state.fileData = null; state.fileMime = null;
-  state.domain = null; state.docType = null; state.scanSummary = null;
+  state.domain = null; state.docType = null; state.scanSummary = null; state.tip = null;
   state.fields = []; state.values = {};
+  state.questions = []; state.aliases = []; state.hiddenSections = []; state.prefillCount = 0;
   enterPhase(1);
 }
 
