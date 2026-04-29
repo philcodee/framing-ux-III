@@ -65,7 +65,7 @@ export const handler = async (event) => {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body:    event.body,
-      signal:  AbortSignal.timeout(22000),
+      signal:  AbortSignal.timeout(28000),
     });
 
     const text = await response.text();
