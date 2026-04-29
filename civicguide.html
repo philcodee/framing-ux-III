@@ -1964,6 +1964,7 @@ PREFILL:
 
       let raw = null;
       const acroRetries = [0, 6, 15];
+      const acroModels  = ['gemini-2.5-flash', 'gemini-2.5-flash', 'gemini-2.5-flash-lite'];
       for (let attempt = 0; attempt < acroRetries.length; attempt++) {
         const wait = acroRetries[attempt];
         if (wait > 0) {
@@ -1973,7 +1974,7 @@ PREFILL:
           }
           briefText.textContent = `Found ${acroFields.length} fields — still enriching labels…`;
         }
-        const result = await callGemini(acroGeminiArgs);
+        const result = await callGemini({ ...acroGeminiArgs, model: acroModels[attempt] });
         if (!result.overloaded) { raw = result.text; break; }
       }
 
