@@ -1887,8 +1887,10 @@ async function initPhase2() {
 
   // Try AcroForm extraction before hitting the AI
   if (state.file?.type === 'application/pdf' && !state.fileUri) {
-    const acroFields = await extractAcroFields(state.file);
+    let acroFields;
+    try { acroFields = await extractAcroFields(state.file); } catch(e) { acroFields = null; }
     if (acroFields?.length) {
+      try {
       state.fields = acroFields;
       state.values = {};
       acroFields.forEach(f => { state.values[f.id] = f.value || ''; });
@@ -2048,6 +2050,14 @@ PREFILL:
         state.scanSummary, state.domain, state.docType
       );
       return;
+      } catch(err) {
+        console.error('[Phase2 AcroForm]', err);
+        thinkingEl.style.display = 'none';
+        briefText.style.display  = 'block';
+        briefText.textContent    = 'Error: ' + err.message;
+        setStatus('');
+        return;
+      }
     }
   }
 
