@@ -1843,6 +1843,7 @@ function buildScanFileCard(file) {
 }
 
 async function initPhase2() {
+  alert('initPhase2 called — fields: ' + state.fields.length + ', file: ' + (state.file?.name || 'none'));
   const thinkingEl    = document.getElementById('scan-thinking');
   const briefText     = document.getElementById('scan-brief-text');
   const confirmBlock  = document.getElementById('scan-confirm-block');
