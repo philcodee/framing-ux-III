@@ -830,56 +830,6 @@ textarea.fill-field-input {
   margin: 0;
 }
 
-.retry-pip-row { display: flex; gap: var(--sp-03); align-items: center; margin-top: var(--sp-04); }
-.retry-pip {
-  width: 8px; height: 8px; border-radius: 50%;
-  background: var(--cds-text-disabled);
-  transition: background var(--motion-moderate) var(--motion-standard);
-}
-.retry-pip.is-done { background: #78a9ff; }
-
-.retry-countdown {
-  font-size: 0.8125rem;
-  color: #78a9ff;
-  margin: var(--sp-02) 0 0;
-}
-
-.scan-file-card {
-  display: flex; align-items: center; gap: var(--sp-04);
-  background: var(--cds-layer-01);
-  border: 1px solid var(--cds-border-subtle-01);
-  padding: var(--sp-04) var(--sp-05);
-  margin-top: var(--sp-05);
-  cursor: pointer;
-}
-.scan-file-card:hover { background: var(--cds-layer-hover-01); border-color: var(--cds-border-strong-01); }
-.scan-file-card-icon { font-size: 1.25rem; color: var(--cds-text-helper); flex-shrink: 0; line-height: 1; }
-.scan-file-card-info { flex: 1; min-width: 0; }
-.scan-file-card-name {
-  font-size: 0.875rem; font-weight: 600;
-  color: var(--cds-text-primary);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.scan-file-card-meta { font-size: 0.75rem; color: var(--cds-text-helper); letter-spacing: 0.32px; }
-.scan-file-card-link { font-size: 0.75rem; color: var(--cds-link-primary); white-space: nowrap; flex-shrink: 0; }
-
-.fill-save-row {
-  display: flex; align-items: center; gap: var(--sp-04);
-  margin-top: var(--sp-06);
-}
-.fill-save-btn {
-  background: none; border: none; padding: 0;
-  font-size: 0.8125rem; color: var(--cds-link-primary);
-  cursor: pointer; text-decoration: underline;
-  font-family: inherit;
-}
-.fill-save-btn:disabled { color: var(--cds-text-disabled); cursor: default; text-decoration: none; }
-.fill-save-confirm {
-  font-size: 0.8125rem; color: var(--cds-text-helper);
-  opacity: 0; transition: opacity 0.3s;
-}
-.fill-save-confirm.is-visible { opacity: 1; }
-
 /* ── Auth Screen ───────────────────────────────────────── */
 
 #auth-screen {
@@ -1342,10 +1292,6 @@ textarea.fill-field-input {
       <button class="ug-confirm-btn" id="btn-p3">Review answers</button>
       <button class="ug-back-btn" onclick="back()">Back</button>
     </div>
-    <div class="fill-save-row" id="fill-save-row" style="display:none">
-      <button class="fill-save-btn" id="btn-fill-save">Save progress</button>
-      <span class="fill-save-confirm" id="fill-save-confirm"></span>
-    </div>
   </section>
 
   <!-- Phase 4 — Review -->
@@ -1696,20 +1642,6 @@ function initPhase1() {
       alert('File exceeds 4 MB. Please use a smaller file.');
       return;
     }
-    // Reset all scan state so initPhase2 runs a fresh scan
-    state.fields         = [];
-    state.values         = {};
-    state.fileUri        = null;
-    state.fileData       = null;
-    state.fileMime       = null;
-    state.domain         = null;
-    state.docType        = null;
-    state.scanSummary    = null;
-    state.questions      = [];
-    state.aliases        = [];
-    state.hiddenSections = [];
-    state.prefillCount   = 0;
-    savedFormId          = null;
     showFile(file);
   }
 
@@ -1787,19 +1719,6 @@ const SCAN_TIP_MSGS = [
   'Almost there — putting together your guided form experience.',
 ];
 
-const RETRY_MSGS = [
-  [
-    'The AI service is temporarily overloaded — this usually clears quickly.',
-    'Hang tight — retrying automatically.',
-    'Your document is still loaded.',
-  ],
-  [
-    'Taking longer than expected — still retrying.',
-    'Your document is still loaded — we haven\'t given up.',
-    'The AI service is under heavy load right now.',
-  ],
-];
-
 function startScanTip() {
   const tipEl  = document.getElementById('scan-tip');
   const textEl = document.getElementById('scan-tip-text');
@@ -1819,31 +1738,7 @@ function stopScanTip(interval) {
   document.getElementById('scan-tip').style.display = 'none';
 }
 
-function buildScanFileCard(file) {
-  const card = document.createElement('div');
-  card.id        = 'scan-file-card';
-  card.className = 'scan-file-card';
-  const kb = file.size < 1024 * 1024
-    ? `${(file.size / 1024).toFixed(0)} KB`
-    : `${(file.size / (1024 * 1024)).toFixed(1)} MB`;
-  card.innerHTML = `
-    <span class="scan-file-card-icon">📄</span>
-    <div class="scan-file-card-info">
-      <div class="scan-file-card-name">${file.name}</div>
-      <div class="scan-file-card-meta">${kb} · ${file.type || 'PDF'}</div>
-    </div>
-    <span class="scan-file-card-link">View ↗</span>
-  `;
-  card.addEventListener('click', () => {
-    const url = URL.createObjectURL(file);
-    window.open(url, '_blank');
-    setTimeout(() => URL.revokeObjectURL(url), 10000);
-  });
-  return card;
-}
-
 async function initPhase2() {
-  alert('initPhase2 called — fields: ' + state.fields.length + ', file: ' + (state.file?.name || 'none'));
   const thinkingEl    = document.getElementById('scan-thinking');
   const briefText     = document.getElementById('scan-brief-text');
   const confirmBlock  = document.getElementById('scan-confirm-block');
@@ -1888,10 +1783,8 @@ async function initPhase2() {
 
   // Try AcroForm extraction before hitting the AI
   if (state.file?.type === 'application/pdf' && !state.fileUri) {
-    let acroFields;
-    try { acroFields = await extractAcroFields(state.file); } catch(e) { acroFields = null; }
+    const acroFields = await extractAcroFields(state.file);
     if (acroFields?.length) {
-      try {
       state.fields = acroFields;
       state.values = {};
       acroFields.forEach(f => { state.values[f.id] = f.value || ''; });
@@ -1912,7 +1805,7 @@ async function initPhase2() {
       const profileHint = (userProfile?.name || userProfile?.location)
         ? `User profile: ${[userProfile.name && `name="${userProfile.name}"`, userProfile.location && `location="${userProfile.location}"`].filter(Boolean).join(', ')}.`
         : '';
-      const acroGeminiArgs = {
+      const { text: raw } = await callGemini({
         prompt: `You are helping a user fill out a government PDF form. Below is a numbered list of AcroForm field IDs extracted from the PDF. Clean up each one.
 
 If you recognise this form from your training knowledge, use that to improve labels, sections, hints, and options.
@@ -1975,25 +1868,9 @@ SHOW IF:
 
 PREFILL:
 - Only where profile data is an obvious match. Never prefill sensitive fields.`,
-        maxTokens: 6000,
+        maxTokens: 8192,
         model: 'gemini-2.5-flash-lite',
-      };
-
-      let raw = null;
-      const acroRetries = [0, 6, 15];
-      const acroModels  = ['gemini-2.5-flash-lite', 'gemini-2.5-flash-lite', 'gemini-2.0-flash'];
-      for (let attempt = 0; attempt < acroRetries.length; attempt++) {
-        const wait = acroRetries[attempt];
-        if (wait > 0) {
-          for (let t = wait; t > 0; t--) {
-            briefText.textContent = `AI service busy — retrying in ${t}s… Your document is still loaded.`;
-            await new Promise(r => setTimeout(r, 1000));
-          }
-          briefText.textContent = `Found ${acroFields.length} fields — still enriching labels…`;
-        }
-        const result = await callGemini({ ...acroGeminiArgs, model: acroModels[attempt] });
-        if (!result.overloaded) { raw = result.text; break; }
-      }
+      });
 
       if (!raw) console.warn('[AcroForm] Gemini call returned no text — skipping enrichment');
       const meta = parseJSON(raw);
@@ -2039,9 +1916,6 @@ PREFILL:
       });
 
       groupDateFields();
-      groupPhoneFields();
-      consolidateCheckboxSiblings();
-      deduplicateByLabel();
 
       stopScanTip(acroTipInterval);
       setStatus('ready');
@@ -2051,14 +1925,6 @@ PREFILL:
         state.scanSummary, state.domain, state.docType
       );
       return;
-      } catch(err) {
-        console.error('[Phase2 AcroForm]', err);
-        thinkingEl.style.display = 'none';
-        briefText.style.display  = 'block';
-        briefText.textContent    = 'Error: ' + err.message;
-        setStatus('');
-        return;
-      }
     }
   }
 
@@ -2089,72 +1955,19 @@ PREFILL:
 
   const retryDelays = [0, 8, 20, 40];
   let raw = null;
-  let retryPipRow    = null;
-  let retryCountdown = null;
-  let retryMsgInterval = null;
-
-  function cleanupRetryUI() {
-    if (retryMsgInterval) { clearInterval(retryMsgInterval); retryMsgInterval = null; }
-    document.getElementById('scan-file-card')?.remove();
-    retryPipRow?.remove();    retryPipRow    = null;
-    retryCountdown?.remove(); retryCountdown = null;
-  }
 
   for (let attempt = 0; attempt < retryDelays.length; attempt++) {
     const wait = retryDelays[attempt];
     if (wait > 0) {
-      // File card — injected once on first retry
-      if (attempt === 1 && state.file && !document.getElementById('scan-file-card')) {
-        document.getElementById('scan-brief').insertAdjacentElement('afterend', buildScanFileCard(state.file));
-      }
-
-      // Pip row — created once, pips filled per attempt
-      if (!retryPipRow) {
-        retryPipRow = document.createElement('div');
-        retryPipRow.className = 'retry-pip-row';
-        for (let p = 0; p < 3; p++) {
-          const pip = document.createElement('div');
-          pip.className = 'retry-pip';
-          retryPipRow.appendChild(pip);
-        }
-        briefText.insertAdjacentElement('afterend', retryPipRow);
-      }
-      retryPipRow.children[attempt - 1]?.classList.add('is-done');
-
-      // Countdown element
-      if (!retryCountdown) {
-        retryCountdown = document.createElement('p');
-        retryCountdown.className = 'retry-countdown';
-        retryPipRow.insertAdjacentElement('afterend', retryCountdown);
-      }
-
       thinkingEl.style.display = 'none';
-      briefText.style.display  = 'block';
-      briefText.style.minHeight = '2.5rem';
-
-      // Rotating messages — tier 1 for attempt 1, tier 2 after
-      const msgs = RETRY_MSGS[attempt === 1 ? 0 : 1];
-      let msgIdx = 0;
-      setTimeout(() => typewrite(briefText, msgs[0], 25), 600);
-      retryMsgInterval = setInterval(() => {
-        msgIdx = (msgIdx + 1) % msgs.length;
-        typewrite(briefText, msgs[msgIdx], 25);
-      }, 5000);
-
-      // Countdown ticks independently of message rotation
+      briefText.style.display = 'block';
       for (let t = wait; t > 0; t--) {
-        retryCountdown.textContent = `Retrying in ${t}s…`;
+        briefText.textContent = `AI service is busy — retrying in ${t}s…`;
         await new Promise(r => setTimeout(r, 1000));
       }
-      clearInterval(retryMsgInterval);
-      retryMsgInterval = null;
-      retryCountdown.textContent  = '';
-      briefText.style.minHeight   = '';
-
       thinkingEl.style.display = 'flex';
-      briefText.style.display  = 'none';
+      briefText.style.display = 'none';
     }
-
     let tipInterval = null;
     if (attempt === 0) tipInterval = startScanTip();
     const result = await callGemini(geminiArgs);
@@ -2163,12 +1976,11 @@ PREFILL:
     console.warn(`[Gemini] overloaded, attempt ${attempt + 1}`);
   }
 
-  cleanupRetryUI();
   setStatus('ready');
   thinkingEl.style.display = 'none';
 
   if (raw === null) {
-    briefText.textContent = 'The AI service is overloaded — your document is still loaded. Try again when you\'re ready.';
+    briefText.textContent = 'The AI service is overloaded. Try again when you\'re ready.';
     briefText.style.display = 'block';
     const retryBtn = document.createElement('button');
     retryBtn.className = 'ug-back-btn';
@@ -2199,7 +2011,6 @@ PREFILL:
   state.fields      = result.fields;
   result.fields.forEach(f => { if (!(f.id in state.values)) state.values[f.id] = f.value || ''; });
   groupDateFields();
-  deduplicateByLabel();
 
   continueBtn.addEventListener('click', confirmScan);
   await revealScan(
@@ -2433,100 +2244,6 @@ function groupDateFields() {
   state.fields = result;
 }
 
-function groupPhoneFields() {
-  const fields = state.fields;
-  const result = [];
-  let i = 0;
-  while (i < fields.length) {
-    const f  = fields[i];
-    const f2 = fields[i + 1];
-    const f3 = fields[i + 2];
-
-    const isArea     = f  && f.type === 'text'  && /area.?code|areacode/i.test(f.label  + ' ' + f.id);
-    const isExchange = f2 && f2.type === 'text' && /exchange|prefix/i.test(f2.label + ' ' + f2.id);
-    const isNumber   = f2 && f2.type === 'text' && /phone|telephone|tel|number/i.test(f2.label + ' ' + f2.id);
-    const isLine     = f3 && f3.type === 'text' && /line|last|number/i.test(f3.label  + ' ' + f3.id);
-
-    const sameSection2 = f2 && f.section === f2.section;
-    const sameSection3 = f3 && f.section === f3.section;
-
-    if (isArea && isExchange && isLine && sameSection2 && sameSection3) {
-      // 3-part: area + exchange + subscriber line
-      const syntheticId = `__phone__${f.id}`;
-      const label = f.label.replace(/\s*area.?code\s*/i, '').trim() || 'Phone Number';
-      const parts = [{ id: f.id, part: 'area' }, { id: f2.id, part: 'exchange' }, { id: f3.id, part: 'line' }];
-      const a = state.values[f.id] || '', e = state.values[f2.id] || '', l = state.values[f3.id] || '';
-      if (a || e || l) state.values[syntheticId] = `(${a.padStart(3,'0')}) ${e}-${l}`;
-      result.push({ id: syntheticId, label, type: 'phone-group', section: f.section, sensitive: false, parts });
-      i += 3;
-    } else if (isArea && isNumber && sameSection2) {
-      // 2-part: area code + remainder
-      const syntheticId = `__phone__${f.id}`;
-      const label = f.label.replace(/\s*area.?code\s*/i, '').trim() || 'Phone Number';
-      const parts = [{ id: f.id, part: 'area' }, { id: f2.id, part: 'number' }];
-      const a = state.values[f.id] || '', n = state.values[f2.id] || '';
-      if (a || n) state.values[syntheticId] = `(${a}) ${n}`;
-      result.push({ id: syntheticId, label, type: 'phone-group', section: f.section, sensitive: false, parts });
-      i += 2;
-    } else {
-      result.push(f);
-      i++;
-    }
-  }
-  state.fields = result;
-}
-
-function consolidateCheckboxSiblings() {
-  const fields = state.fields;
-  const result = [];
-  let i = 0;
-  while (i < fields.length) {
-    const f = fields[i];
-    if (f.type !== 'checkbox') { result.push(f); i++; continue; }
-
-    const parent = (() => { const d = f.id.lastIndexOf('.'); return d > 0 ? f.id.slice(0, d) : null; })();
-    if (!parent) { result.push(f); i++; continue; }
-
-    const siblings = [f];
-    let j = i + 1;
-    while (j < fields.length && fields[j].type === 'checkbox') {
-      const d = fields[j].id.lastIndexOf('.');
-      if (d > 0 && fields[j].id.slice(0, d) === parent) { siblings.push(fields[j]); j++; }
-      else break;
-    }
-
-    if (siblings.length < 2) { result.push(f); i++; continue; }
-
-    const syntheticId = `__cbgroup__${f.id}`;
-    const rawGroup = parent.split('.').pop().replace(/([a-z])([A-Z])/g, '$1 $2').replace(/[_-]/g, ' ').trim();
-
-    // Strip redundant group-name prefix from each part label
-    const norm = rawGroup.toLowerCase();
-    const parts = siblings.map(s => {
-      const stripped = s.label.toLowerCase().startsWith(norm)
-        ? s.label.slice(rawGroup.length).replace(/^[\s:–\-]+/, '').trim() || s.label
-        : s.label;
-      return { id: s.id, label: stripped };
-    });
-
-    const checkedLabels = parts.filter(p => ['yes','true','on','1'].includes((state.values[p.id]||'').toLowerCase())).map(p => p.label);
-    state.values[syntheticId] = checkedLabels.join(', ');
-    result.push({ id: syntheticId, label: rawGroup, type: 'checkbox-group', section: f.section, sensitive: false, parts });
-    i = j;
-  }
-  state.fields = result;
-}
-
-function deduplicateByLabel() {
-  const seen = new Set();
-  state.fields = state.fields.filter(f => {
-    const key = (f.label || '').toLowerCase().replace(/\W+/g, ' ').trim() + '|' + (f.section || '');
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
-}
-
 // ── Phase 3 — Fill ───────────────────────────────────────
 
 let fillGroupIndex = 0;
@@ -2557,22 +2274,6 @@ function getSections() {
 function initPhase3() {
   fillGroupIndex = 0;
   renderFillGroup();
-
-  const saveRow  = document.getElementById('fill-save-row');
-  const saveBtn  = document.getElementById('btn-fill-save');
-  const saveConf = document.getElementById('fill-save-confirm');
-
-  if (!currentUser) { saveRow.style.display = 'none'; return; }
-
-  saveRow.style.display = 'flex';
-  saveBtn.addEventListener('click', async () => {
-    saveBtn.disabled = true;
-    await saveFormState('fill');
-    saveBtn.disabled = false;
-    saveConf.textContent = 'Saved';
-    saveConf.classList.add('is-visible');
-    setTimeout(() => saveConf.classList.remove('is-visible'), 2500);
-  });
 }
 
 function renderFillGroup() {
@@ -2720,14 +2421,7 @@ function renderFillGroup() {
       input.placeholder = 'MM/DD/YYYY';
       input.value       = assembled;
       if (assembled) wrap.classList.add('is-filled');
-      input.addEventListener('input', (e) => {
-        if (!e.inputType?.startsWith('delete')) {
-          const digits = input.value.replace(/\D/g, '').slice(0, 8);
-          let fmt = digits.slice(0, 2);
-          if (digits.length > 2) fmt += '/' + digits.slice(2, 4);
-          if (digits.length > 4) fmt += '/' + digits.slice(4, 8);
-          if (input.value !== fmt) input.value = fmt;
-        }
+      input.addEventListener('input', () => {
         const [mo, dy, yr] = input.value.split('/');
         state.values[field.parts[0].id] = (mo || '').trim();
         state.values[field.parts[1].id] = (dy || '').trim();
@@ -2737,62 +2431,6 @@ function renderFillGroup() {
         evaluateVisibility();
       });
       wrap.appendChild(input);
-    } else if (field.type === 'phone-group') {
-      const input = document.createElement('input');
-      input.type        = 'tel';
-      input.className   = 'fill-field-input';
-      input.placeholder = '(555) 867-5309';
-      input.value       = state.values[field.id] || '';
-      if (input.value) wrap.classList.add('is-filled');
-      input.addEventListener('input', (e) => {
-        if (!e.inputType?.startsWith('delete')) {
-          const digits = input.value.replace(/\D/g, '').slice(0, 10);
-          let fmt = '';
-          if (digits.length > 0) fmt = '(' + digits.slice(0, 3);
-          if (digits.length >= 3) fmt += ') ' + digits.slice(3, 6);
-          if (digits.length >= 6) fmt += '-' + digits.slice(6, 10);
-          if (input.value !== fmt) input.value = fmt;
-        }
-        state.values[field.id] = input.value;
-        const digits = input.value.replace(/\D/g, '');
-        if (field.parts.length === 3) {
-          state.values[field.parts[0].id] = digits.slice(0, 3);
-          state.values[field.parts[1].id] = digits.slice(3, 6);
-          state.values[field.parts[2].id] = digits.slice(6, 10);
-        } else {
-          state.values[field.parts[0].id] = digits.slice(0, 3);
-          state.values[field.parts[1].id] = digits.slice(3, 10);
-        }
-        wrap.classList.toggle('is-filled', !!input.value.trim());
-        evaluateVisibility();
-      });
-      wrap.appendChild(input);
-    } else if (field.type === 'checkbox-group') {
-      const groupEl = document.createElement('div');
-      groupEl.className = 'fill-options';
-      field.parts.forEach(part => {
-        const lbl = document.createElement('label');
-        lbl.className = 'fill-option';
-        const inp = document.createElement('input');
-        inp.type    = 'checkbox';
-        inp.checked = ['yes','true','on','1'].includes((state.values[part.id] ?? '').toLowerCase());
-        const span = document.createElement('span');
-        span.className   = 'fill-option-label';
-        span.textContent = part.label;
-        lbl.appendChild(inp);
-        lbl.appendChild(span);
-        inp.addEventListener('change', () => {
-          state.values[part.id] = inp.checked ? 'Yes' : 'Off';
-          state.values[field.id] = field.parts.filter(p => state.values[p.id] === 'Yes').map(p => p.label).join(', ');
-          wrap.classList.toggle('is-filled', field.parts.some(p => state.values[p.id] === 'Yes'));
-          evaluateVisibility();
-        });
-        groupEl.appendChild(lbl);
-      });
-      if (field.parts.some(p => ['yes','true','on','1'].includes((state.values[p.id] ?? '').toLowerCase()))) {
-        wrap.classList.add('is-filled');
-      }
-      wrap.appendChild(groupEl);
     } else if (field.options?.length > 0) {
       const current = state.values[field.id] ?? field.value ?? '';
       if (field.options.length > 5) {
@@ -3030,22 +2668,6 @@ async function exportToFilledPDF() {
   state.fields.forEach(f => {
     if (f.type === 'date-group') {
       f.parts.forEach(p => { if (state.values[p.id]) valueMap[p.id] = state.values[p.id]; });
-      return;
-    }
-    if (f.type === 'phone-group') {
-      const digits = (state.values[f.id] || '').replace(/\D/g, '');
-      if (f.parts.length === 3) {
-        if (digits.slice(0, 3)) valueMap[f.parts[0].id] = digits.slice(0, 3);
-        if (digits.slice(3, 6)) valueMap[f.parts[1].id] = digits.slice(3, 6);
-        if (digits.slice(6))    valueMap[f.parts[2].id] = digits.slice(6, 10);
-      } else {
-        if (digits.slice(0, 3)) valueMap[f.parts[0].id] = digits.slice(0, 3);
-        if (digits.slice(3))    valueMap[f.parts[1].id] = digits.slice(3, 10);
-      }
-      return;
-    }
-    if (f.type === 'checkbox-group') {
-      f.parts.forEach(p => { valueMap[p.id] = state.values[p.id] || 'Off'; });
       return;
     }
     if (f.type !== 'signature' && state.values[f.id]) valueMap[f.id] = state.values[f.id];
