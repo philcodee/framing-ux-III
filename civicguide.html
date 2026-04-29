@@ -807,6 +807,29 @@ textarea.fill-field-input {
   background: var(--cds-layer-01);
 }
 
+.scan-tip {
+  display: none;
+  align-items: flex-start;
+  gap: var(--sp-03);
+  padding: var(--sp-03) var(--sp-05);
+  margin-top: var(--sp-05);
+  background: var(--cds-layer-01);
+  border-left: 2px solid var(--cds-interactive);
+}
+.scan-tip-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--cds-interactive);
+  animation: dotpulse 1s ease-in-out infinite;
+  flex-shrink: 0;
+  margin-top: 0.35rem;
+}
+.scan-tip-text {
+  font-size: 0.8125rem;
+  line-height: 1.375rem;
+  color: var(--cds-text-secondary);
+  margin: 0;
+}
+
 /* ── Auth Screen ───────────────────────────────────────── */
 
 #auth-screen {
@@ -1214,6 +1237,11 @@ textarea.fill-field-input {
           <p class="agent-brief-text" id="scan-brief-text"></p>
         </div>
       </div>
+    </div>
+
+    <div class="scan-tip" id="scan-tip">
+      <span class="scan-tip-dot"></span>
+      <p class="scan-tip-text" id="scan-tip-text"></p>
     </div>
 
     <p class="scan-save-note" id="scan-save-note" style="display:none">Progress saved — you can close this and come back later.</p>
@@ -1684,6 +1712,32 @@ async function extractAcroFields(file) {
 
 // ── Phase 2 — Scan ───────────────────────────────────────
 
+const SCAN_TIP_MSGS = [
+  'Reading your document now — this usually takes 15–30 seconds.',
+  'Gemini understands layout and field types, not just raw text.',
+  'Complex forms take a little longer — still working on yours.',
+  'Almost there — putting together your guided form experience.',
+];
+
+function startScanTip() {
+  const tipEl  = document.getElementById('scan-tip');
+  const textEl = document.getElementById('scan-tip-text');
+  let i = 0;
+  textEl.textContent = '';
+  tipEl.classList.add('ug-fade-up');
+  tipEl.style.display = 'flex';
+  typewrite(textEl, SCAN_TIP_MSGS[0], 18);
+  return setInterval(() => {
+    i = (i + 1) % SCAN_TIP_MSGS.length;
+    typewrite(textEl, SCAN_TIP_MSGS[i], 18);
+  }, 6000);
+}
+
+function stopScanTip(interval) {
+  clearInterval(interval);
+  document.getElementById('scan-tip').style.display = 'none';
+}
+
 async function initPhase2() {
   const thinkingEl    = document.getElementById('scan-thinking');
   const briefText     = document.getElementById('scan-brief-text');
@@ -1739,6 +1793,8 @@ async function initPhase2() {
       thinkingEl.style.display = 'none';
       briefText.style.display  = 'block';
       briefText.textContent    = `Found ${acroFields.length} fields — reading the form and enriching labels…`;
+
+      const acroTipInterval = startScanTip();
 
       // Text-only call — indexed list so Gemini never needs to reproduce long field IDs as keys
       const fieldList = acroFields.map((f, i) => {
@@ -1861,6 +1917,7 @@ PREFILL:
 
       groupDateFields();
 
+      stopScanTip(acroTipInterval);
       setStatus('ready');
       continueBtn.addEventListener('click', confirmScan);
       await revealScan(
@@ -1911,7 +1968,10 @@ PREFILL:
       thinkingEl.style.display = 'flex';
       briefText.style.display = 'none';
     }
+    let tipInterval = null;
+    if (attempt === 0) tipInterval = startScanTip();
     const result = await callGemini(geminiArgs);
+    if (tipInterval !== null) stopScanTip(tipInterval);
     if (!result.overloaded) { raw = result.text; break; }
     console.warn(`[Gemini] overloaded, attempt ${attempt + 1}`);
   }
