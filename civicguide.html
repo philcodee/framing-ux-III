@@ -1895,7 +1895,7 @@ async function initPhase2() {
       const profileHint = (userProfile?.name || userProfile?.location)
         ? `User profile: ${[userProfile.name && `name="${userProfile.name}"`, userProfile.location && `location="${userProfile.location}"`].filter(Boolean).join(', ')}.`
         : '';
-      const { text: raw } = await callGemini({
+      const acroGeminiArgs = {
         prompt: `You are helping a user fill out a government PDF form. Below is a numbered list of AcroForm field IDs extracted from the PDF. Clean up each one.
 
 If you recognise this form from your training knowledge, use that to improve labels, sections, hints, and options.
@@ -1960,7 +1960,22 @@ PREFILL:
 - Only where profile data is an obvious match. Never prefill sensitive fields.`,
         maxTokens: 8192,
         model: 'gemini-2.5-flash',
-      });
+      };
+
+      let raw = null;
+      const acroRetries = [0, 6, 15];
+      for (let attempt = 0; attempt < acroRetries.length; attempt++) {
+        const wait = acroRetries[attempt];
+        if (wait > 0) {
+          for (let t = wait; t > 0; t--) {
+            briefText.textContent = `AI service busy — retrying in ${t}s… Your document is still loaded.`;
+            await new Promise(r => setTimeout(r, 1000));
+          }
+          briefText.textContent = `Found ${acroFields.length} fields — still enriching labels…`;
+        }
+        const result = await callGemini(acroGeminiArgs);
+        if (!result.overloaded) { raw = result.text; break; }
+      }
 
       if (!raw) console.warn('[AcroForm] Gemini call returned no text — skipping enrichment');
       const meta = parseJSON(raw);
