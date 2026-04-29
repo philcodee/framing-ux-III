@@ -1959,12 +1959,12 @@ SHOW IF:
 PREFILL:
 - Only where profile data is an obvious match. Never prefill sensitive fields.`,
         maxTokens: 6000,
-        model: 'gemini-2.5-flash',
+        model: 'gemini-2.5-flash-lite',
       };
 
       let raw = null;
       const acroRetries = [0, 6, 15];
-      const acroModels  = ['gemini-2.5-flash', 'gemini-2.5-flash', 'gemini-2.5-flash-lite'];
+      const acroModels  = ['gemini-2.5-flash-lite', 'gemini-2.5-flash-lite', 'gemini-2.5-flash-lite'];
       for (let attempt = 0; attempt < acroRetries.length; attempt++) {
         const wait = acroRetries[attempt];
         if (wait > 0) {
