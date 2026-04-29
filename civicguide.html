@@ -1696,6 +1696,20 @@ function initPhase1() {
       alert('File exceeds 4 MB. Please use a smaller file.');
       return;
     }
+    // Reset all scan state so initPhase2 runs a fresh scan
+    state.fields         = [];
+    state.values         = {};
+    state.fileUri        = null;
+    state.fileData       = null;
+    state.fileMime       = null;
+    state.domain         = null;
+    state.docType        = null;
+    state.scanSummary    = null;
+    state.questions      = [];
+    state.aliases        = [];
+    state.hiddenSections = [];
+    state.prefillCount   = 0;
+    savedFormId          = null;
     showFile(file);
   }
 
