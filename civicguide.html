@@ -1964,7 +1964,7 @@ PREFILL:
 
       let raw = null;
       const acroRetries = [0, 6, 15];
-      const acroModels  = ['gemini-2.5-flash-lite', 'gemini-2.5-flash-lite', 'gemini-2.5-flash-lite'];
+      const acroModels  = ['gemini-2.5-flash-lite', 'gemini-2.5-flash-lite', 'gemini-2.0-flash'];
       for (let attempt = 0; attempt < acroRetries.length; attempt++) {
         const wait = acroRetries[attempt];
         if (wait > 0) {
